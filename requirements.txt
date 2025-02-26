@@ -1,3 +1,4 @@
 requests
 sqlalchemy
 mysql-connector-python
+feedparser

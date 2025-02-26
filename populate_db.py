@@ -2,16 +2,30 @@ import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from database_defs import Base, Papers, Journals, Authors, People, Institutions
+from constants import test_input
 
 # Fetch cancer research papers from Semantic Scholar
-def get_cancer_research_papers():
+def get_cancer_research_papers(query="cancer research", limit=10, fields=None, debug=False):
+    if debug:
+        return test_input
+    
     url = "https://api.semanticscholar.org/graph/v1/paper/search"
+    
+    if fields is None:
+        fields = "title,venue,authors,year"
+    
     params = {
-        "query": "cancer research",
-        "limit": 10,
-        "fields": "title,doi,venue,authors,year"
+        "query": query,
+        "limit": limit,
+        "fields": fields
     }
+    
     response = requests.get(url, params=params)
+    
+    if response.status_code != 200:
+        print(f"Error: {response.status_code} - {response.text}")
+        return []
+        
     return response.json().get("data", [])
 
 # Populate the database with retrieved papers
@@ -28,6 +42,7 @@ def populate_database():
     papers = get_cancer_research_papers()
 
     for paper in papers:
+        print(paper)
         journal_name = paper.get("venue", "Unknown Journal")
         
         # Check if journal already exists in the database, if not, create it
@@ -51,6 +66,7 @@ def populate_database():
         authors = paper.get("authors", [])
 
         for i, author in enumerate(authors):
+            print(author)
             author_id = author.get("authorId", f"unknown_{author.get('name')}")
             author_name = author.get("name", "Unknown").split()
             first_name = author_name[0] if len(author_name) > 0 else "Unknown"
@@ -93,4 +109,8 @@ def populate_database():
     print("Database populated successfully!")
 
 if __name__ == "__main__":
+    ## test the get_cancer_research_papers function
+    papers = get_cancer_research_papers()
+    print(papers)
+
     populate_database()
