@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ResearchPulse Dashboard</title>
+</head>
+<body>
+    <h1>Dashboard</h1>
+    
+    <h2>Profile</h2>
+    <p>Name: {{ session.name }}</p>
+    <p>Person ID: {{ session.person_id }}</p>
+    <hr>
+    <h2>Follow by Person ID</h2>
+    <form action="{{ url_for('dashboard') }}" method="GET">
+        <input type="text" name="search_id" placeholder="Enter Person ID">
+        <button type="submit">Follow</button>
+    </form>
+
+    <hr>
+    <h2>People You Follow</h2>
+    {% if following %}
+    <ul>
+        {% for person in following %}
+            <li>{{ person.first_name }} {{ person.last_name }} ({{ person.person_id }})</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>You are not following anyone yet.</p>
+    {% endif %}
+
+    <hr>
+    <h2>Papers by Authors You Follow</h2>
+    {% if followed_papers %}
+    <ul>
+        {% for paper in followed_papers %}
+            <li>
+                {{ paper.title }} 
+                <span class="author">by {{ paper.first_name }} {{ paper.last_name }}</span>
+            </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No papers by authors you follow.</p>
+    {% endif %}
+
+    <hr>
+    <h2>Discover Papers</h2>
+    <ul>
+        {% for paper in random_papers %}
+            <li>{{ paper.title }}</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+</body>
+</html>
