@@ -1,7 +1,7 @@
 import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database_defs import Base, Papers, Journals, Authors, People, Institutions
+from database_defs import Base, Papers, Journals, Authors, People, Institutions, DiscussionGroups, GroupMembers
 from constants import test_input
 
 # Fetch cancer research papers from Semantic Scholar
@@ -27,6 +27,53 @@ def get_cancer_research_papers(query="cancer research", limit=10, fields=None, d
         return []
         
     return response.json().get("data", [])
+
+def get_discussion_group():
+
+    groups = [
+        {
+            "group_id": "Group1",
+            "group_name": "Cancer Research Group",
+            "description": "A group for researchers working on cancer-related topics."
+        },
+        {
+            "group_id": "Group2",
+            "group_name": "AI in Medicine",
+            "description": "A group for researchers exploring AI applications in medicine."
+        }
+    ]
+    
+    return groups
+
+
+def populate_discussion_groups():
+    # Use the RDS connection string here
+    DATABASE_URL = "mysql+mysqlconnector://admin:c0eYBliLpdHULPaktvSE@researchpulse.cbkkuyoa4oz7.us-east-2.rds.amazonaws.com:3306/researchpulse"
+    
+    # Establish the engine and session
+    engine = create_engine(DATABASE_URL)
+    Base.metadata.create_all(engine)  # Create tables in RDS database
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    groups = get_discussion_group()
+
+    # Handle groups
+
+    for group in groups:
+        existing_group = session.query(DiscussionGroups).filter_by(group_id=group["group_id"]).first()
+        if not existing_group:
+            new_group = DiscussionGroups(
+                group_id=group["group_id"],
+                group_name=group["group_name"],
+                description=group["description"]
+            )
+            print(group["group_id"])
+            print(group["group_name"])
+            session.add(new_group)
+            session.commit()
+
+
+    session.close()
 
 # Populate the database with retrieved papers
 def populate_database():
@@ -114,3 +161,4 @@ if __name__ == "__main__":
     print(papers)
 
     populate_database()
+    # populate_discussion_groups()

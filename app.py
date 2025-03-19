@@ -78,13 +78,39 @@ def dashboard():
         ORDER BY p.publication_date DESC
     """, (session['person_id'],))
     followed_papers = cursor.fetchall()
+
+    group_result = None
+    group_error = None
+    if 'group_id' in request.args:
     
+        group_id = request.args.get('group_id')
+
+        cursor.execute("SELECT * FROM discussion_groups WHERE group_id = %s", (group_id,))
+        group_result = cursor.fetchone()
+        print(group_result)
+
+        if group_result:
+            cursor.execute("INSERT IGNORE INTO group_members (group_id, person_id) VALUES (%s, %s)",
+                           (group_id, session['person_id']))
+            conn.commit()
+        elif not group_result:
+            group_error = f"No group found with ID: {group_id}"
+
+    cursor.execute("""
+        SELECT gp.* FROM discussion_groups gp
+        JOIN group_members gm ON gp.group_id = gm.group_id
+        WHERE gm.person_id = %s
+    """, (session['person_id'],))
+    discussion_groups = cursor.fetchall()
+
+    print("Discussion Groups:", discussion_groups)
+
     cursor.close()
     conn.close()
     
     return render_template('dashboard.html', random_papers=random_papers, 
-                           search_result=search_result, search_error=search_error,
-                           following=following, followed_papers=followed_papers)
+                           search_result=search_result, search_error=search_error, group_error=group_error,
+                           following=following, followed_papers=followed_papers, discussion_groups=discussion_groups)
 
 @app.route('/logout')
 def logout():
