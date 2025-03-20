@@ -24,7 +24,7 @@ function Home() {
         height: '100vh', // Full viewport height
         textAlign: 'center',
         borderRadius: 2,
-        backgroundColor: '#023E8A', // Light gray background
+        backgroundColor: '#023E8A',
       }} 
     >
       <Box sx={{
