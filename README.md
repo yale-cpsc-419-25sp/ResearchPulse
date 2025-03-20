@@ -28,3 +28,16 @@ Once the virtual environment is activated, install the required packages:
 ```bash
 pip install -r requirements.txt
 ```
+Enter frontend folder and run npm install:
+
+```bash
+npm install
+```
+
+Start server:
+
+```bash
+npm start
+```
+
+
