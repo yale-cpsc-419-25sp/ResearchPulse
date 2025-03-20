@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormLabel from '@mui/material/FormLabel';
@@ -32,33 +33,29 @@ const LogInContainer = styled(Stack)(({ theme }) => ({
 }));
 
 function Login() {
-  const [userError] = React.useState(false);
-  const [userErrorMessage] = React.useState('');
+  const [userError, setUserError] = useState(false);
+  const [userErrorMessage, setUserErrorMessage] = useState('');
+  const [userId, setUserId] = useState('');
 
-  const handleSubmit = (event) => {
-    if (userError) {
-      event.preventDefault();
-      return;
-    }
-    const data = new FormData(event.currentTarget);
+  const handleSubmit = () => {
     console.log({
-      user_id: data.get('user_id'),
+      user_id: userId,
     });
   };
 
   const validateInputs = () => {
-    const user_id = document.getElementById('user_id');
-    let isValid = true;
+    // TODO
+    // Send inputs (username and password) to backend for validation
+    // If not validated show error message, else authenticate and redirect page
 
-    if (!user_id.value) {
-      userError(true);
-      userErrorMessage('Please enter a valid User ID.');
-      isValid = false;
+    if (!userId) {
+      setUserError(true);
+      setUserErrorMessage('Please enter a valid User ID.');
     } else {
-      userError(false);
-      userErrorMessage('');
+      setUserError(false);
+      setUserErrorMessage('');
+      handleSubmit();
     }
-    return isValid;
   };
 
   return (
@@ -75,43 +72,32 @@ function Login() {
           >
             Sign in
           </Typography>
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            noValidate
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              gap: 2,
-            }}
-          >
-            <FormControl>
-              <FormLabel htmlFor="user_id">User ID</FormLabel>
-              <TextField
-                error={userError}
-                helperText={userErrorMessage}
-                id="user_id"
-                type="user_id"
-                name="user_id"
-                placeholder="Enter your ID"
-                autoComplete="user_id"
-                autoFocus
-                required
-                fullWidth
-                variant="outlined"
-                color={userError ? 'error' : 'primary'}
-              />
-            </FormControl>
-            <Button
-              type="submit"
+          <FormControl>
+            <FormLabel htmlFor="user_id">User ID</FormLabel>
+            <TextField
+              error={userError}
+              helperText={userErrorMessage}
+              id="user_id"
+              type="user_id"
+              name="user_id"
+              placeholder="Enter your ID"
+              autoComplete="user_id"
+              autoFocus
+              required
               fullWidth
-              variant="contained"
-              onClick={validateInputs}
-            >
-              Log in
-            </Button>
-          </Box>
+              variant="outlined"
+              color={userError ? 'error' : 'primary'}
+              onChange={(event) => setUserId(event.target.value)}
+            />
+          </FormControl>
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            onClick={validateInputs}
+          >
+            Log in
+          </Button>
         </Card>
       </LogInContainer>
       </Box>

@@ -12,8 +12,6 @@ function Home() {
     navigate('/login'); // Redirect to the login page
   };
 
-  <div className='gradient_background'></div>
-
   return (
     <Box sx={{
         display: 'flex',
