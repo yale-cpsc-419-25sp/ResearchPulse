@@ -2,10 +2,11 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "proxy":"http://localhost:3306/",
+  "proxy": "http://localhost:3306/",
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@fontsource/roboto": "^5.2.5",
     "@mui/material": "^6.4.8",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
