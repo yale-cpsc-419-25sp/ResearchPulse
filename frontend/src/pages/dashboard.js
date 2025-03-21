@@ -1,13 +1,59 @@
 import * as React from 'react';
+import { useState } from 'react';
 import { styled, alpha } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import InputBase from '@mui/material/InputBase';
-import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
+import Drawer from '@mui/material/Drawer';
+import Divider from '@mui/material/Divider';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import MailIcon from '@mui/icons-material/Mail';
+import StarIcon from '@mui/icons-material/Star';
+import FeedIcon from '@mui/icons-material/Feed';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import GroupRemoveIcon from '@mui/icons-material/GroupRemove';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { Button, IconButton } from '@mui/material';
+import MenuItem from '@mui/material/MenuItem';
+import Menu from '@mui/material/Menu';
+
+
+const drawerSize = 240;
+const drawerItems = [
+  // TODO add navigation to each item so when you click it goes somwhere
+  // Will need to adjust the Drawersection code below to accomodate
+  {
+    header: 'Dashboard',
+    items: [
+      {name: 'Followed Papers', icon: <FeedIcon />},
+      {name: 'Followed Authors', icon: <AssignmentIndIcon />},
+      {name: 'Starred', icon: <StarIcon/>},
+    ]
+  },
+  {
+    header: 'Discover',
+    items: [
+      {name: 'Recent Papers', icon: <FeedIcon />},
+      {name: 'Recent Authors', icon: <AssignmentIndIcon />},
+    ]
+  },
+  {
+    header: 'Messages',
+    items: [
+      {name: 'Inbox', icon: <MailIcon />},
+      {name: 'Join Group', icon: <GroupAddIcon/>},
+      {name: 'Leave Group', icon: <GroupRemoveIcon/>},
+    ]
+  }
+];
 
 const Search = styled(Box)(({ theme }) => ({
   position: 'relative',
@@ -39,7 +85,6 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   width: '100%',
   '& .MuiInputBase-input': {
     padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
     transition: theme.transitions.create('width'),
     [theme.breakpoints.up('sm')]: {
@@ -51,29 +96,60 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-function Dashboard() {
+function DrawerSection(component) {
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static">
+    <Box>
+      <Divider />
+      <Typography variant="h6" align='left' marginBlockStart={2} marginInlineStart={2}>
+        {component.header}
+      </Typography>
+      <List>
+        {component.items.map((item) => {
+          return(
+            <ListItem disablePadding>
+              <ListItemButton>
+                <ListItemIcon>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary = {item.name} />
+              </ListItemButton>
+            </ListItem>
+          )
+        })}
+      </List>
+    </Box>
+  );
+}
+
+function Dashboard() {
+
+  const [auth, setAuth] = useState(true);
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleChange = (event) => {
+    setAuth(event.target.checked);
+  };
+
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  return (
+    <Box sx={{ display: 'flex' }}>
+      <AppBar
+        position="fixed"
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      >
         <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="open drawer"
-            sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
-          >
-            ResearchPulse
+          <Typography variant="h6" noWrap component="div"
+            sx={{ flexGrow: 1, fontSize: 40}}>
+              ResearchPulse
           </Typography>
-          <Search>
+          <Search margin={1.5}>
             <SearchIconWrapper>
               <SearchIcon />
             </SearchIconWrapper>
@@ -82,8 +158,72 @@ function Dashboard() {
               inputProps={{ 'aria-label': 'search' }}
             />
           </Search>
+          {auth && (
+            <Box>
+              <IconButton color="inherit" size="large" aria-label="account of current user" aria-controls="menu-appbar"
+                    aria-haspopup="true"
+                    onClick={handleMenu}
+              >
+                <AccountCircleIcon fontSize='large'/>
+              </IconButton>
+              <Menu
+                sx={{ mt: '45px' }}
+                id="menu-appbar"
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+              >
+                <MenuItem onClick={handleClose}>Profile</MenuItem>
+                <MenuItem onClick={handleClose}>My Account</MenuItem>
+                <MenuItem onClick={handleClose}>Log Out</MenuItem>
+              </Menu>
+            </Box>
+          )}
+          <Typography>
+            <Button color="inherit" sx={{fontSize: 18}}>
+              About
+            </Button>
+          </Typography>
         </Toolbar>
       </AppBar>
+      <Drawer
+        sx={{
+          width: drawerSize,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: drawerSize,
+            boxSizing: 'border-box',
+          },
+        }}
+        variant="permanent"
+        anchor="left"
+      >
+        <Toolbar />
+        {drawerItems.map((component) => DrawerSection(component))}
+      </Drawer>
+      <Box component="main" sx={{ p: 3 }}>
+        <Toolbar />
+          <Typography variant="h6">
+            Welcome to
+          </Typography>
+          <Typography variant="h3" marginBlockEnd={3}>
+            ResearchPulse
+            <Divider sx={{ opacity:0.8}}/>
+          </Typography>
+        <Typography variant="h6">
+          A web platform where researchers can stay up to date with the latest
+          research and research discussions through personalized research feeds. 
+        </Typography>
+      </Box>
     </Box>
   );
 }
