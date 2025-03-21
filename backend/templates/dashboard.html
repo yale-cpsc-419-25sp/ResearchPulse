@@ -10,10 +10,11 @@
     <p>Name: {{ session.name }}</p>
     <p>Person ID: {{ session.person_id }}</p>
     <hr>
+    
     <h2>Follow by Person ID</h2>
-    <form action="{{ url_for('dashboard') }}" method="GET">
-        <input type="text" name="search_id" placeholder="Enter Person ID">
-        <button type="submit">Follow</button>
+    <form action="{{ url_for('follow') }}" method="POST">
+        <input type="text" name="person_id" placeholder="Person ID" required>
+        <button type="submit" class="btn btn-primary">Follow</button>
     </form>
 
     <hr>
@@ -21,7 +22,14 @@
     {% if following %}
     <ul>
         {% for person in following %}
-            <li>{{ person.first_name }} {{ person.last_name }} ({{ person.person_id }})</li>
+            <li>
+                <a href="/id/{{ person.person_id }}">{{ person.first_name }} {{ person.last_name }}</a> (ID: {{ person.person_id }})
+                <!-- Unfollow Button -->
+                <form action="{{ url_for('unfollow') }}" method="POST" style="display:inline;">
+                    <input type="hidden" name="person_id" value="{{ person.person_id }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Unfollow</button>
+                </form>
+            </li>
         {% endfor %}
     </ul>
     {% else %}
@@ -36,6 +44,11 @@
             <li>
                 {{ paper.title }} 
                 <span class="author">by {{ paper.first_name }} {{ paper.last_name }}</span>
+                <!-- Unstar Paper Button -->
+                <form action="{{ url_for('unstar_paper') }}" method="POST" style="display:inline;">
+                    <input type="hidden" name="paper_id" value="{{ paper.paper_id }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Unstar Paper</button>
+                </form>
             </li>
         {% endfor %}
     </ul>
@@ -44,22 +57,55 @@
     {% endif %}
 
     <hr>
+    <h2>Starred Papers</h2>
+    {% if starred_papers %}
+    <ul>
+        {% for starred in starred_papers %}
+            <li>
+                {{ starred.title }}
+                <!-- Unstar Paper Button -->
+                <form action="{{ url_for('unstar_paper') }}" method="POST" style="display:inline;">
+                    <input type="hidden" name="paper_id" value="{{ starred.paper_id }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Unstar</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>You have no starred papers.</p>
+    {% endif %}
+    
+    <h2>Star a Paper</h2>
+    <form action="{{ url_for('star_paper') }}" method="POST">
+        <input type="text" name="paper_id" placeholder="Enter Paper ID">
+        <button type="submit">Star</button>
+    </form>
+
+    <hr>
     <h2>Groups</h2>
     {% if discussion_groups %}
     <ul>
         {% for group in discussion_groups %}
-            <li>{{ group.group_name }} ({{ group.group_id }}) - {{ group.description }}</li>
+            <li>
+                <a href="/group/{{ group.group_id }}">{{ group.group_name }} ({{ group.group_id }})</a> - {{ group.description }}
+                <!-- Leave Group Button -->
+                <form action="{{ url_for('leave_group') }}" method="POST" style="display:inline;">
+                    <input type="hidden" name="group_id" value="{{ group.group_id }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Leave Group</button>
+                </form>
+            </li>
         {% endfor %}
     </ul>
     {% else %}
     <p>You are not in a group.</p>
     {% endif %}
 
-    <h3>Join a Group</h3>
-    <form action="{{ url_for('dashboard') }}" method="GET">
-        <input type="text" name="group_id" placeholder="Enter Group ID">
+    <h2>Join a Group</h2>
+    <form action="{{ url_for('join_group') }}" method="POST">
+        <input type="text" name="group_id" placeholder="Enter Group ID" required>
         <button type="submit">Join</button>
     </form>
+
 
     <hr>
     <h2>Discover Papers</h2>

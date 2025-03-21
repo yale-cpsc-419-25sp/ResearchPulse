@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Details</title>
+</head>
+<body>
+    <h1>Group Details</h1>
+
+    {% if group %}
+        <h2>{{ group.group_name }}</h2>
+        <p>{{ group.description }}</p>
+
+        <h3>Members:</h3>
+        <ul>
+        {% for member in group.members %}
+            <li><a href="/id/{{ member.person_id }}">{{ member.first_name }} {{ member.last_name }}</a> (ID: {{ member.person_id }})</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Group not found.</p>
+    {% endif %}
+
+</body>
+</html>

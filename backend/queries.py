@@ -1,0 +1,241 @@
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from database_defs import Papers, People, Authors, DiscussionGroups, GroupMembers, PeopleFollowing, StarredPapers
+
+# RDS connection string
+DATABASE_URL = "mysql+mysqlconnector://admin:c0eYBliLpdHULPaktvSE@researchpulse.cbkkuyoa4oz7.us-east-2.rds.amazonaws.com:3306/researchpulse"
+
+# Create SQLAlchemy engine and session
+engine = create_engine(DATABASE_URL)
+Session = sessionmaker(bind=engine)
+
+def insert_following(person_id, follower_id):
+    return """
+        INSERT IGNORE INTO people_following (person_id, follower_id) 
+        VALUES (%s, %s)
+    """
+
+def insert_group_member(group_id, person_id):
+    return """
+        INSERT INTO group_members (group_id, person_id)
+        VALUES (%s, %s)
+    """
+
+def get_random_papers(cursor):
+    cursor.execute("SELECT title FROM papers ORDER BY RAND() LIMIT 5")
+    return cursor.fetchall()
+
+def get_person_by_id(cursor, person_id):
+    cursor.execute("SELECT * FROM people WHERE person_id = %s", (person_id,))
+    return cursor.fetchone()
+
+def get_following(cursor, person_id):
+    cursor.execute("""
+        SELECT p.* FROM people p
+        JOIN people_following pf ON p.person_id = pf.person_id
+        WHERE pf.follower_id = %s
+    """, (person_id,))
+    return cursor.fetchall()
+
+def get_starred_papers(cursor, person_id):
+    cursor.execute("""
+        SELECT p.title, p.paper_id, pe.first_name, pe.last_name 
+        FROM papers p
+        JOIN starred_papers sp ON p.paper_id = sp.paper_id
+        JOIN people pe ON sp.person_id = pe.person_id
+        WHERE sp.person_id = %s
+        ORDER BY p.publication_date DESC
+    """, (person_id,))
+    return cursor.fetchall()
+
+def get_discussion_groups(cursor, person_id):
+    cursor.execute("""
+        SELECT gp.* FROM discussion_groups gp
+        JOIN group_members gm ON gp.group_id = gm.group_id
+        WHERE gm.person_id = %s
+    """, (person_id,))
+    return cursor.fetchall()
+
+def get_group_by_id(cursor, group_id):
+    cursor.execute("SELECT * FROM discussion_groups WHERE group_id = %s", (group_id,))
+    return cursor.fetchone()
+
+def get_person_data(person_id):
+    """Retrieve person data, followers, following, authored papers, and group memberships."""
+    session = Session()
+
+    try:
+        # Get basic person data
+        person = session.query(People).filter_by(person_id=person_id).first()
+
+        if not person:
+            return None  # Person not found
+
+        person_dict = {
+            "person_id": person.person_id,
+            "first_name": person.first_name,
+            "last_name": person.last_name,
+            "institution_id": person.institution_id,
+            "primary_department": person.primary_department,
+        }
+
+        # Get people they are following
+        following = (
+            session.query(People)
+            .join(PeopleFollowing, People.person_id == PeopleFollowing.person_id)  # people they follow
+            .filter(PeopleFollowing.follower_id == person_id)  # where the person_id is the follower
+            .all()
+        )
+        person_dict["following"] = [
+            {"person_id": p.person_id, "first_name": p.first_name, "last_name": p.last_name}
+            for p in following
+        ]
+
+
+        # Get people who follow them
+        followers = (
+            session.query(People)
+            .join(PeopleFollowing, People.person_id == PeopleFollowing.follower_id)  # people who follow them
+            .filter(PeopleFollowing.person_id == person_id)  # where the person_id is being followed
+            .all()
+        )
+        person_dict["followers"] = [
+            {"person_id": p.person_id, "first_name": p.first_name, "last_name": p.last_name}
+            for p in followers
+        ]
+
+
+        # Get authored papers
+        authored_papers = (
+            session.query(Papers)
+            .join(Authors, Papers.paper_id == Authors.paper_id)
+            .filter(Authors.author_id == person_id)
+            .all()
+        )
+        person_dict["authored_papers"] = [
+            {"paper_id": p.paper_id, "title": p.title, "publication_date": p.publication_date}
+            for p in authored_papers
+        ]
+
+        # Get group memberships
+        groups = (
+            session.query(DiscussionGroups)
+            .join(GroupMembers, DiscussionGroups.group_id == GroupMembers.group_id)
+            .filter(GroupMembers.person_id == person_id)
+            .all()
+        )
+        person_dict["groups"] = [
+            {"group_id": g.group_id, "group_name": g.group_name, "description": g.description}
+            for g in groups
+        ]
+
+        # Get starred papers
+        # Get starred papers
+        starred_papers = (
+            session.query(Papers)
+            .join(StarredPapers, Papers.paper_id == StarredPapers.paper_id)
+            .filter(StarredPapers.person_id == person_id)
+            .all()
+        )
+
+        person_dict["starred_papers"] = [
+            {"paper_id": p.paper_id, "title": p.title, "publication_date": p.publication_date}
+            for p in starred_papers
+        ]
+        return person_dict
+
+    except Exception as e:
+        print(f"Database error: {e}")
+        return None
+
+    finally:
+        session.close()
+
+def get_group_data(group_id):
+    """Retrieve group name, description, and members."""
+    session = Session()
+
+    try:
+        # Get basic group data
+        group = session.query(DiscussionGroups).filter_by(group_id=group_id).first()
+
+        if not group:
+            return None  # Group not found
+
+        group_dict = {
+            "group_name": group.group_name,
+            "description": group.description,
+        }
+
+        # Get members of the group
+        members = (
+            session.query(People)
+            .join(GroupMembers, People.person_id == GroupMembers.person_id)
+            .filter(GroupMembers.group_id == group_id)
+            .all()
+        )
+        group_dict["members"] = [
+            {"person_id": m.person_id, "first_name": m.first_name, "last_name": m.last_name}
+            for m in members
+        ]
+
+        return group_dict
+
+    except Exception as e:
+        print(f"Database error: {e}")
+        return None
+
+    finally:
+        session.close()
+
+def is_paper_starred(person_id, paper_id):
+    """Check if a specific paper is already starred by the user."""
+    session = Session()
+
+    # Query the starred papers relationship
+    result = session.query(StarredPapers).filter_by(person_id=person_id, paper_id=paper_id).first()
+
+    return result is not None  # Returns True if the paper is starred, False otherwise
+
+def star_paper(person_id, paper_id):
+    """Add a paper to the user's starred list."""
+    session = Session()
+
+    # Check if the paper is already starred
+    if is_paper_starred(person_id, paper_id):
+        return "This paper is already starred", 400
+
+    # Add the paper to the starred papers relationship
+    starred_paper = StarredPapers(person_id=person_id, paper_id=paper_id)
+    session.add(starred_paper)
+    session.commit()
+
+    return "Paper starred successfully", 200
+
+def unstar_paper(person_id, paper_id):
+    """Remove a paper from the user's starred list."""
+    session = Session()
+
+    # Check if the paper is starred
+    if not is_paper_starred(person_id, paper_id):
+        return "This paper is not starred", 400
+
+    # Remove the paper from the starred papers relationship
+    starred_paper = session.query(StarredPapers).filter_by(person_id=person_id, paper_id=paper_id).first()
+    if starred_paper:
+        session.delete(starred_paper)
+        session.commit()
+
+    return "Paper unstarred successfully", 200
+
+def print_paper_ids():
+    """Print all paper IDs in the database."""
+    session = Session()
+
+    # Query all papers and get their IDs
+    papers = session.query(Papers).all()
+
+    # Print the IDs of all the papers
+    for paper in papers:
+        print(paper.paper_id)  # Assuming paper_id is the column name for the paper ID
+

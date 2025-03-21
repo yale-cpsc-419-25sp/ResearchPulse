@@ -22,6 +22,7 @@ class Papers (Base):
     journal_id = Column(String(255), ForeignKey('journals.journal_id'))
 
     journal = relationship("Journals", back_populates="papers")
+    starred_by = relationship("StarredPapers", back_populates="paper")
 
 class Journals (Base):
     __tablename__ = 'journals'
@@ -40,6 +41,7 @@ class People (Base):
     primary_department = Column(String(255))
 
     institution = relationship("Institutions", back_populates="people")
+    starred_papers = relationship("StarredPapers", back_populates="person")
 
 class Authors (Base):
     __tablename__ = 'authors'
@@ -83,6 +85,15 @@ class AI_Summaries (Base):
     paper_id = Column(String(255), ForeignKey('papers.paper_id'), primary_key=True)
     summary_text = Column(String(255))
 
+class StarredPapers(Base):
+    __tablename__ = 'starred_papers'
+    person_id = Column(String(255), ForeignKey('people.person_id'), primary_key=True)
+    paper_id = Column(String(255), ForeignKey('papers.paper_id'), primary_key=True)
+
+    person = relationship("People", back_populates="starred_papers")
+    paper = relationship("Papers", back_populates="starred_by")
+
+    
 # Establish connection to the RDS MySQL instance
 engine = create_engine(DATABASE_URL)
 

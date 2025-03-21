@@ -1,4 +1,7 @@
 import mysql.connector
+from sqlite3 import connect
+from contextlib import closing
+import sys
 
 db = mysql.connector.connect(
     host="researchpulse.cbkkuyoa4oz7.us-east-2.rds.amazonaws.com",  # RDS Endpoint

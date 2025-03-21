@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ person.first_name }} {{ person.last_name }} - Profile</title>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <div class="card-header text-center bg-primary text-white">
+            <h2>{{ person.first_name }} {{ person.last_name }}</h2>
+            <p class="mb-0">{{ person.primary_department }} at {{ person.institution_id }}</p>
+        </div>
+        <div class="card-body">
+            
+            <!-- Basic Info -->
+            <div class="mb-3">
+                <h2 class="section-title">Profile Information</h2>
+                <ul class="list-group">
+                    <li class="list-group-item"><strong>Person ID:</strong> {{ person.person_id }}</li>
+                    <li class="list-group-item"><strong>Institution ID:</strong> {{ person.institution_id }}</li>
+                    <li class="list-group-item"><strong>Primary Department:</strong> {{ person.primary_department }}</li>
+                </ul>
+            </div>
+
+            <!-- Followers -->
+            <div class="mb-3">
+                <h2 class="section-title">Followers ({{ person.followers | length }})</h2>
+                {% if person.followers %}
+                    <ul class="list-group">
+                        {% for follower in person.followers %}
+                            <li class="list-group-item">
+                                <a href="/id/{{ follower.person_id }}">{{ follower.first_name }} {{ follower.last_name }}</a> (ID: {{ follower.person_id }})
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No followers yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Following -->
+            <div class="mb-3">
+                <h2 class="section-title">Following ({{ person.following | length }})</h2>
+                {% if person.following %}
+                    <ul class="list-group">
+                        {% for follow in person.following %}
+                            <li class="list-group-item">
+                                <a href="/id/{{ follow.person_id }}">{{ follow.first_name }} {{ follow.last_name }}</a> (ID: {{ follow.person_id }})
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Not following anyone yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Authored Papers -->
+            <div class="mb-3">
+                <h2 class="section-title">Authored Papers ({{ person.authored_papers | length }})</h2>
+                {% if person.authored_papers %}
+                    <ul class="list-group">
+                        {% for paper in person.authored_papers %}
+                            <li class="list-group-item">
+                                <strong>{{ paper.title }}</strong> (Published: {{ paper.publication_date }}) | Paper ID: {{ paper.paper_id }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No authored papers.</p>
+                {% endif %}
+            </div>
+
+            <!-- Group Memberships -->
+            <div class="mb-3">
+                <h2 class="section-title">Group Memberships ({{ person.groups | length }})</h2>
+                {% if person.groups %}
+                    <ul class="list-group">
+                        {% for group in person.groups %}
+                            <li class="list-group-item">
+                                {{ group.group_name }} - {{ group.description }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Not part of any groups.</p>
+                {% endif %}
+            </div>
+
+            <!-- Starred Papers -->
+            <div class="mb-3">
+                <h2 class="section-title">Starred Papers ({{ person.starred_papers | length }})</h2>
+                {% if person.starred_papers %}
+                    <ul class="list-group">
+                        {% for paper in person.starred_papers %}
+                            <li class="list-group-item">
+                                <strong>{{ paper.title }}</strong> (Published: {{ paper.publication_date }}) | Paper ID: {{ paper.paper_id }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No starred papers yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-footer text-center">
+            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+            <a href="/logout" class="btn btn-danger">Logout</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
