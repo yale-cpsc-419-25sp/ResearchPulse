@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ paper.title }}</title>
+</head>
+<body>
+
+    <div class="container">
+        <h2>{{ paper.title }}</h2>
+        <p><strong>DOI:</strong> {{ paper.doi }}</p>
+        <p><strong>Published on:</strong> {{ paper.publication_date }}</p>
+
+        <!-- Authors -->
+        <h3>Authors</h3>
+        {% if authors %}
+            <ul>
+                {% for a in authors %}
+                    <li><a href="/id/{{ a.person_id }}">{{ a.first_name }} {{ a.last_name }} (ID: {{ a.person_id }})</a></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No authors listed.</p>
+        {% endif %}
+
+        <!-- Starred By -->
+        <h3>Starred By</h3>
+        {% if starred_by %}
+            <ul>
+                {% for person in starred_by %}
+                    <li><a href="/id/{{ person.person_id }}">{{ person.first_name }} {{ person.last_name }} (ID: {{ person.person_id }})</a></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No one has starred this paper yet.</p>
+        {% endif %}
+
+        <!-- Comments -->
+        <h3>Comments</h3>
+        {% if comments %}
+            <ul>
+                {% for comment in comments %}
+                    <li><strong>{{ comment.first_name }} {{ comment.last_name }}:</strong> {{ comment.comment_text }} ({{ comment.date }})</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No comments yet.</p>
+        {% endif %}
+
+         <!-- Comment Form -->
+         <form method="POST" action="{{ url_for('add_comment', paper_id=paper.paper_id) }}">
+            <textarea name="comment_text" rows="4" cols="50" placeholder="Write your comment here..." required></textarea><br><br>
+            <button type="submit">Comment</button>
+        </form>
+    </div>
+
+</body>
+</html>

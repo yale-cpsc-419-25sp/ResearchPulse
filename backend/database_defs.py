@@ -6,7 +6,7 @@
 #-----------------------------------------------------------------------
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, Text, DateTime
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 
@@ -71,15 +71,15 @@ class PeopleFollowing (Base):
     person_id = Column(String(255), ForeignKey('people.person_id'), primary_key=True)
     follower_id = Column(String(255), ForeignKey('people.person_id'), primary_key=True)
 
-class Comments (Base):
+class Comments(Base):
     __tablename__ = 'comments'
-    comment_id = Column(String(255), primary_key=True)  # Specify length for String
-    paper_id = Column(String(255), ForeignKey('papers.paper_id'))
-    person_id = Column(String(255), ForeignKey('people.person_id'))
-    comment_text = Column(String(255))
-    parent_comment_id = Column(String(255), ForeignKey('comments.comment_id'))
-    date = Column(Date)  # Use Date instead of String
 
+    comment_id = Column(Integer, primary_key=True, autoincrement=True)
+    paper_id = Column(String(255), nullable=False)
+    person_id = Column(String(255), nullable=False)
+    comment_text = Column(Text, nullable=False)
+    date = Column(DateTime, nullable=False)
+    
 class AI_Summaries (Base):
     __tablename__ = 'ai_summaries'
     paper_id = Column(String(255), ForeignKey('papers.paper_id'), primary_key=True)
@@ -92,8 +92,7 @@ class StarredPapers(Base):
 
     person = relationship("People", back_populates="starred_papers")
     paper = relationship("Papers", back_populates="starred_by")
-
-    
+        
 # Establish connection to the RDS MySQL instance
 engine = create_engine(DATABASE_URL)
 

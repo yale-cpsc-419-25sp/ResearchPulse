@@ -1,6 +1,8 @@
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-from database_defs import Papers, People, Authors, DiscussionGroups, GroupMembers, PeopleFollowing, StarredPapers
+from database_defs import Papers, People, Authors, DiscussionGroups, GroupMembers, PeopleFollowing, StarredPapers, Comments
+from datetime import datetime
+from mysql.connector import connect, Error
 
 # RDS connection string
 DATABASE_URL = "mysql+mysqlconnector://admin:c0eYBliLpdHULPaktvSE@researchpulse.cbkkuyoa4oz7.us-east-2.rds.amazonaws.com:3306/researchpulse"
@@ -238,4 +240,117 @@ def print_paper_ids():
     # Print the IDs of all the papers
     for paper in papers:
         print(paper.paper_id)  # Assuming paper_id is the column name for the paper ID
+
+def get_paper_data(session, paper_id):
+    """Fetch information about a specific paper."""
+    
+    # Get paper details
+    paper = (
+        session.query(Papers)
+        .filter(Papers.paper_id == paper_id)
+        .with_entities(
+            Papers.paper_id,
+            Papers.title,
+            Papers.doi,
+            Papers.publication_date
+        )
+        .first()
+    )
+    
+    if not paper:
+        return None
+
+    # Get authors of the paper
+    authors = (
+        session.query(People)
+        .join(Authors, People.person_id == Authors.author_id)
+        .filter(Authors.paper_id == paper_id)
+        .with_entities(
+            People.person_id,
+            People.first_name,
+            People.last_name
+        )
+        .all()
+    )
+
+    # Get comments on the paper
+    comments = (
+        session.query(Comments, People)
+        .join(People, Comments.person_id == People.person_id)
+        .filter(Comments.paper_id == paper_id)
+        .with_entities(
+            Comments.comment_text,
+            Comments.date,
+            People.first_name,
+            People.last_name
+        )
+        .order_by(Comments.date.desc())
+        .all()
+    )
+
+    # Get people who starred the paper
+    starred_by = (
+        session.query(People)
+        .join(StarredPapers, People.person_id == StarredPapers.person_id)
+        .filter(StarredPapers.paper_id == paper_id)
+        .with_entities(
+            People.person_id,
+            People.first_name,
+            People.last_name
+        )
+        .all()
+    )
+
+    # Prepare the paper data dictionary
+    paper_data = {
+        "paper": {
+            "paper_id": paper.paper_id,
+            "title": paper.title,
+            "doi": paper.doi,
+            "publication_date": paper.publication_date
+        },
+        "authors": [
+            {"person_id": a.person_id, "first_name": a.first_name, "last_name": a.last_name}
+            for a in authors
+        ],
+        "comments": [
+            {"comment_text": c.comment_text, "date": c.date, "first_name": c.first_name, "last_name": c.last_name}
+            for c in comments
+        ],
+        "starred_by": [
+            {"person_id": s.person_id, "first_name": s.first_name, "last_name": s.last_name}
+            for s in starred_by
+        ]
+    }
+
+    return paper_data
+
+def insert_comment(paper_id, person_id, comment_text, date=None):
+    """Insert a comment for a paper."""
+    session = Session()
+
+    try:
+        if not date:
+            date = datetime.now()
+
+        print(f"Inserting comment with paper_id: {paper_id}, person_id: {person_id}, comment_text: {comment_text}, date: {date}")
+        
+        comment = Comments(
+            paper_id=paper_id,
+            person_id=person_id,
+            comment_text=comment_text,
+            date=date
+        )
+
+        session.add(comment)
+        session.commit()
+
+        print(f"Comment inserted successfully! Comment ID: {comment.comment_id}")
+        
+    except Exception as e:
+        session.rollback()
+        print(f"Error inserting comment: {e}")
+
+    finally:
+        session.close()
 

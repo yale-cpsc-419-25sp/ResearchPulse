@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 import mysql.connector
-from queries import get_person_data, get_group_data, insert_following, insert_group_member, get_discussion_groups, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers
-from database_defs import Papers, People, Authors, DiscussionGroups, GroupMembers, PeopleFollowing, StarredPapers
+from queries import get_person_data, get_group_data, insert_following, insert_group_member, get_discussion_groups, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment
+from database_defs import Papers, People, Authors, DiscussionGroups, GroupMembers, PeopleFollowing, StarredPapers, Comments
 from sqlalchemy.orm import sessionmaker
 from database_defs import engine
 
@@ -293,6 +293,40 @@ def get_group_route(group_id):
     else:
         return jsonify({"error": "Group not found"}), 404
     
+@app.route('/paper/<paper_id>')
+def get_paper_route(paper_id):
+    db_session = Session()  # Single session created here
+    paper_data = get_paper_data(db_session, paper_id)  # Pass session
+    db_session.close()  # Properly close session when done
+
+    if paper_data:
+        return render_template(
+            'paper_id.html',
+            paper=paper_data["paper"],
+            authors=paper_data["authors"],
+            comments=paper_data["comments"],
+            starred_by=paper_data["starred_by"]
+        )
+    else:
+        return jsonify({"error": "Paper not found"}), 404
+
+@app.route('/paper/<paper_id>/comment', methods=['POST'])
+def add_comment(paper_id):
+    try:
+        # Extract form data
+        person_id = session.get('person_id')
+        comment_text = request.form['comment_text']
+        date = request.form.get('date')
+
+        # Insert comment into the database
+        insert_comment(paper_id, person_id, comment_text, date)
+
+        # Redirect back to the paper detail page using the correct endpoint
+        return redirect(url_for('get_paper_route', paper_id=paper_id))
+
+    except Exception as e:
+        return f"Error: {str(e)}"
+
 @app.route('/logout')
 def logout():
     session.clear()
