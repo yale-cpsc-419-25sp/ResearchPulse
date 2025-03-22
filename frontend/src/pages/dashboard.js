@@ -1,13 +1,55 @@
 import * as React from 'react';
+import { useState } from 'react';
 import { styled, alpha } from '@mui/material/styles';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
+import {Box, Drawer, List, AppBar, Toolbar, Typography, Divider, Button, IconButton} from '@mui/material';
 import InputBase from '@mui/material/InputBase';
-import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import MailIcon from '@mui/icons-material/Mail';
+import StarIcon from '@mui/icons-material/Star';
+import FeedIcon from '@mui/icons-material/Feed';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import GroupRemoveIcon from '@mui/icons-material/GroupRemove';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import MenuItem from '@mui/material/MenuItem';
+import Menu from '@mui/material/Menu';
+import InfoIcon from '@mui/icons-material/Info';
+import Grid from '@mui/material/Grid2';
+
+
+const drawerSize = 240;
+const drawerItems = [
+  // TODO add navigation to each item so when you click it goes somwhere
+  // Will need to adjust the Drawersection code below to accomodate
+  {
+    header: 'Dashboard',
+    items: [
+      {name: 'Profile', icon: <AccountCircleIcon />},
+      {name: 'Followed Papers', icon: <FeedIcon />},
+      {name: 'Followed Authors', icon: <AssignmentIndIcon />},
+      {name: 'Starred', icon: <StarIcon/>},
+    ]
+  },
+  {
+    header: 'Discover',
+    items: [
+      {name: 'Recent Papers', icon: <FeedIcon />},
+      {name: 'Recent Authors', icon: <AssignmentIndIcon />},
+    ]
+  },
+  {
+    header: 'Messages',
+    items: [
+      {name: 'Inbox', icon: <MailIcon />},
+      {name: 'Join Group', icon: <GroupAddIcon/>},
+      {name: 'Leave Group', icon: <GroupRemoveIcon/>},
+    ]
+  }
+];
 
 const Search = styled(Box)(({ theme }) => ({
   position: 'relative',
@@ -39,7 +81,6 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   width: '100%',
   '& .MuiInputBase-input': {
     padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
     transition: theme.transitions.create('width'),
     [theme.breakpoints.up('sm')]: {
@@ -51,29 +92,84 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-function Dashboard() {
+function DrawerSection(component) {
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static">
+    <Box>
+      <Divider />
+      <Typography variant="h6" align='left' marginBlockStart={2} marginInlineStart={2}>
+        {component.header}
+      </Typography>
+      <List>
+        {component.items.map((item) => {
+          return(
+            <ListItem disablePadding>
+              <ListItemButton>
+                <ListItemIcon>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary = {item.name} />
+              </ListItemButton>
+            </ListItem>
+          )
+        })}
+      </List>
+    </Box>
+  );
+}
+
+const Boxes = styled(Box)(({ theme, height }) => ({
+  backgroundColor: theme.palette.action.hover,
+  borderRadius: theme.shape.borderRadius,
+  height,
+  padding: theme.spacing(2),
+}));
+
+const ProfileBox = ({height, width, type, title, attributes}) => (
+  <Button sx={{textTransform: 'none'}}>
+    <Boxes height={height} width={width}>
+      <Typography variant={type} color="black">
+        {title}
+        {attributes.map((attr) => (
+          <Box>
+            {attr}
+          </Box>
+        ))}
+      </Typography>
+    </Boxes>
+  </Button>
+);
+
+function Dashboard() {
+
+  const [auth] = useState(true);
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  // const handleChange = (event) => {
+  //   setAuth(event.target.checked);
+  // };
+  // TODO: Backend connection
+
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  // TODO: Make ResearchPulse Heading a Button back to homepage
+  return (
+    <Box sx={{ display: 'flex' }}>
+      <AppBar
+        position="fixed"
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      >
         <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="open drawer"
-            sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
-          >
-            ResearchPulse
+          <Typography variant="h6" noWrap component="div"
+            sx={{ flexGrow: 1, fontSize: 40}}>
+              ResearchPulse
           </Typography>
-          <Search>
+          <Search margin={1.5}>
             <SearchIconWrapper>
               <SearchIcon />
             </SearchIconWrapper>
@@ -82,8 +178,94 @@ function Dashboard() {
               inputProps={{ 'aria-label': 'search' }}
             />
           </Search>
+          {auth && (
+            <Box>
+              <IconButton color="inherit" size="large" aria-label="account of current user" aria-controls="menu-appbar"
+                    aria-haspopup="true"
+                    onClick={handleMenu}
+              >
+                <AccountCircleIcon fontSize='large'/>
+              </IconButton>
+              <Menu
+                sx={{ mt: '45px' }}
+                id="menu-appbar"
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+              >
+                <MenuItem onClick={handleClose}>Profile</MenuItem>
+                <MenuItem onClick={handleClose}>My Account</MenuItem>
+                <MenuItem onClick={handleClose}>Log Out</MenuItem>
+              </Menu>
+            </Box>
+          )}
+          <Typography>
+            <Button color="inherit" sx={{fontSize: 18}}>
+              About
+            </Button>
+          </Typography>
         </Toolbar>
       </AppBar>
+      <Drawer
+        sx={{
+          width: drawerSize,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: drawerSize,
+            boxSizing: 'border-box',
+          },
+        }}
+        variant="permanent"
+        anchor="left"
+      >
+        <Toolbar />
+        {drawerItems.map((component) => DrawerSection(component))}
+        <List>
+            <ListItem disablePadding sx={{position: "fixed", bottom: 10, width: drawerSize}}>
+              <ListItemButton>
+                <ListItemIcon>
+                  <InfoIcon/>
+                </ListItemIcon>
+                <ListItemText primary = "Help"/>
+              </ListItemButton>
+            </ListItem>
+        </List>
+      </Drawer>
+      <Box component="main" sx={{ p: 3 }}>
+        <Toolbar />
+          <Typography variant="h6">
+            Welcome to
+          </Typography>
+          <Typography variant="h1" marginBlockEnd={3}>
+            ResearchPulse
+            <Divider sx={{ opacity:0.8}}/>
+          </Typography>
+        <Typography variant="h6" marginBlockEnd={3}>
+          A web platform where researchers can stay up to date with the latest
+          research and research discussions through personalized research feeds. 
+        </Typography>
+        <Divider/>
+          <Grid container spacing={3}>
+            <Grid size="auto">
+              {ProfileBox({height: 20,  width:800, type: 'h5', title: 'My Feed', attributes: [""]})}
+            </Grid>
+            <Grid item style={{width: "100%"}}>
+              {ProfileBox({height: 200, width: 500, type: 'h5', title: 'My Following', attributes: [""]})}
+              {ProfileBox({height: 200,  width: 500, type: 'h5', title: 'Papers by My Following', attributes: [""]})}
+              {ProfileBox({height: 200,  width: 500, type: 'h5', title: 'Starred Papers', attributes: [""]})}
+              {ProfileBox({height: 200,  width: 500, type: 'h5', title: 'Groups', attributes: [""]})}
+            </Grid>
+          </Grid>
+      </Box>
     </Box>
   );
 }
