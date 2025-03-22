@@ -1,15 +1,9 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { styled, alpha } from '@mui/material/styles';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
+import {Box, Drawer, List, AppBar, Toolbar, Typography, Divider, Button, IconButton} from '@mui/material';
 import InputBase from '@mui/material/InputBase';
 import SearchIcon from '@mui/icons-material/Search';
-import Drawer from '@mui/material/Drawer';
-import Divider from '@mui/material/Divider';
-import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -21,9 +15,10 @@ import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import GroupRemoveIcon from '@mui/icons-material/GroupRemove';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import { Button, IconButton } from '@mui/material';
 import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
+import InfoIcon from '@mui/icons-material/Info';
+import Grid from '@mui/material/Grid2';
 
 
 const drawerSize = 240;
@@ -33,6 +28,7 @@ const drawerItems = [
   {
     header: 'Dashboard',
     items: [
+      {name: 'Profile', icon: <AccountCircleIcon />},
       {name: 'Followed Papers', icon: <FeedIcon />},
       {name: 'Followed Authors', icon: <AssignmentIndIcon />},
       {name: 'Starred', icon: <StarIcon/>},
@@ -121,14 +117,37 @@ function DrawerSection(component) {
   );
 }
 
+const Boxes = styled(Box)(({ theme, height }) => ({
+  backgroundColor: theme.palette.action.hover,
+  borderRadius: theme.shape.borderRadius,
+  height,
+  padding: theme.spacing(2),
+}));
+
+const ProfileBox = ({height, width, type, title, attributes}) => (
+  <Button sx={{textTransform: 'none'}}>
+    <Boxes height={height} width={width}>
+      <Typography variant={type} color="black">
+        {title}
+        {attributes.map((attr) => (
+          <Box>
+            {attr}
+          </Box>
+        ))}
+      </Typography>
+    </Boxes>
+  </Button>
+);
+
 function Dashboard() {
 
-  const [auth, setAuth] = useState(true);
+  const [auth] = useState(true);
   const [anchorEl, setAnchorEl] = useState(null);
 
-  const handleChange = (event) => {
-    setAuth(event.target.checked);
-  };
+  // const handleChange = (event) => {
+  //   setAuth(event.target.checked);
+  // };
+  // TODO: Backend connection
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -138,6 +157,7 @@ function Dashboard() {
     setAnchorEl(null);
   };
 
+  // TODO: Make ResearchPulse Heading a Button back to homepage
   return (
     <Box sx={{ display: 'flex' }}>
       <AppBar
@@ -209,20 +229,42 @@ function Dashboard() {
       >
         <Toolbar />
         {drawerItems.map((component) => DrawerSection(component))}
+        <List>
+            <ListItem disablePadding sx={{position: "fixed", bottom: 10, width: drawerSize}}>
+              <ListItemButton>
+                <ListItemIcon>
+                  <InfoIcon/>
+                </ListItemIcon>
+                <ListItemText primary = "Help"/>
+              </ListItemButton>
+            </ListItem>
+        </List>
       </Drawer>
       <Box component="main" sx={{ p: 3 }}>
         <Toolbar />
           <Typography variant="h6">
             Welcome to
           </Typography>
-          <Typography variant="h3" marginBlockEnd={3}>
+          <Typography variant="h1" marginBlockEnd={3}>
             ResearchPulse
             <Divider sx={{ opacity:0.8}}/>
           </Typography>
-        <Typography variant="h6">
+        <Typography variant="h6" marginBlockEnd={3}>
           A web platform where researchers can stay up to date with the latest
           research and research discussions through personalized research feeds. 
         </Typography>
+        <Divider/>
+          <Grid container spacing={3}>
+            <Grid size="auto">
+              {ProfileBox({height: 20,  width:800, type: 'h5', title: 'My Feed', attributes: [""]})}
+            </Grid>
+            <Grid item style={{width: "100%"}}>
+              {ProfileBox({height: 200, width: 500, type: 'h5', title: 'My Following', attributes: [""]})}
+              {ProfileBox({height: 200,  width: 500, type: 'h5', title: 'Papers by My Following', attributes: [""]})}
+              {ProfileBox({height: 200,  width: 500, type: 'h5', title: 'Starred Papers', attributes: [""]})}
+              {ProfileBox({height: 200,  width: 500, type: 'h5', title: 'Groups', attributes: [""]})}
+            </Grid>
+          </Grid>
       </Box>
     </Box>
   );
