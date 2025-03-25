@@ -38,9 +38,25 @@ function Login() {
   const [userId, setUserId] = useState('');
 
   const handleSubmit = () => {
-    console.log({
-      user_id: userId,
-    });
+    fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // need to set up cookies for this
+      body: JSON.stringify({ person_id: userId })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          window.location.href = '/dashboard';
+        } else {
+          setUserError(true);
+          setUserErrorMessage(data.error || 'Login failed');
+        }
+      })
+      .catch(() => {
+        setUserError(true);
+        setUserErrorMessage('Server error');
+      });
   };
 
   const validateInputs = () => {

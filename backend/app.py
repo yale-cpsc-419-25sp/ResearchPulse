@@ -326,6 +326,47 @@ def add_comment(paper_id):
 
     except Exception as e:
         return f"Error: {str(e)}"
+        
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.json
+    person_id = data.get('person_id')
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM people WHERE person_id = %s", (person_id,))
+    person = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if person:
+        session['person_id'] = person_id
+        return jsonify({'success': True})
+    return jsonify({'error': 'Invalid Person ID'}), 401
+
+@app.route('/api/signup', methods=['POST'])
+def signup():
+    data = request.json
+
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+
+    if not first_name or not last_name:
+        return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO people (first_name, last_name)
+        VALUES (%s, %s)
+    """, (first_name, last_name))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'success': True})
 
 @app.route('/logout')
 def logout():

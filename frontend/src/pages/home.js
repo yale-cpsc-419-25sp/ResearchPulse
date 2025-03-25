@@ -1,66 +1,99 @@
 import * as React from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-// import Button from '@mui/material/Button';
+import { Box, Typography, Button, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 
 function Home() {
   const navigate = useNavigate();
 
-  const handleLoginClick = () => {
-    navigate('/login'); // Redirect to the login page
-  };
-
   return (
-    <Box sx={{
+    <Box
+      sx={{
+        backgroundColor: '#F9FAFB',
+        height: '100vh',
         display: 'flex',
-        boxShadow: 1,
-        flexDirection: 'column',
-        justifyContent: 'center',
         alignItems: 'center',
-        height: '100vh', // Full viewport height
-        textAlign: 'center',
-        borderRadius: 2,
-        backgroundColor: '#023E8A',
-      }} 
-    >
-      <Box sx={{
-        display: 'flex',
-        boxShadow: 8,
-        padding: 5,
-        flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
-        backgroundColor: '#ffff', // Light gray background
-      }} 
-    >
-      <Typography variant="h1">Welcome to</Typography>
-      <Typography variant="h1" sx={{ mb: 2 }}>ResearchPulse</Typography>
-      
-      <Typography variant="h6" sx={{ mb: 4 }}>
-      A Platform where researchers can stay up to date with the
-      latest research and research discussions through personalized
-      research feeds. 
-      </Typography>
-
-      <Box sx={{
-        padding: 3,
-        display: 'flex',
-        backgroundColor: '#CAF0F8', // White background
-        borderRadius: 2, // Rounded corners
-        boxShadow: 5, // Add shadow
-        cursor: 'pointer', // Change cursor on hover
-        '&:hover': {
-          backgroundColor: '#e0e0e0', // Light gray on hover
-        },
+        px: 3,
       }}
-      onClick={handleLoginClick} // Redirect to login on click
+    >
+      <Box
+        sx={{
+          maxWidth: 800,
+          textAlign: 'center',
+        }}
       >
-        <Typography variant="h6">Click here to log in</Typography>
+
+        <img
+          src="/ResearchPulse_1.svg"
+          alt="ResearchPulse logo"
+          style={{ width: 80, height: 'auto', marginBottom: 20 }}
+        />
+
+        <Typography
+          variant="h2"
+          sx={{
+            fontWeight: 700,
+            fontSize: { xs: '2.5rem', sm: '3.5rem' },
+            mb: 2,
+          }}
+        >
+          Welcome to <br />
+          <Box component="span" sx={{ color: '#3B82F6' }}>
+            ResearchPulse
+          </Box>
+        </Typography>
+
+        <Typography
+          variant="h6"
+          color="text.secondary"
+          sx={{
+            mb: 5,
+            maxWidth: 600,
+            mx: 'auto',
+          }}
+        >
+          A platform where researchers can stay up to date with the latest research
+          and research discussions through personalized research feeds.
+        </Typography>
+
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          justifyContent="center"
+        >
+          <Button
+            variant="contained"
+            size="large"
+            onClick={() => navigate('/login')}
+            sx={{
+              backgroundColor: '#3B82F6',
+              '&:hover': { backgroundColor: '#2563EB' },
+              textTransform: 'none',
+              px: 4,
+            }}
+          >
+            Log In
+          </Button>
+          <Button
+            variant="outlined"
+            size="large"
+            onClick={() => navigate('/signup')}
+            sx={{
+              borderColor: '#3B82F6',
+              color: '#3B82F6',
+              '&:hover': {
+                backgroundColor: '#EFF6FF',
+                borderColor: '#3B82F6',
+              },
+              textTransform: 'none',
+              px: 4,
+            }}
+          >
+            Sign Up
+          </Button>
+        </Stack>
       </Box>
-    </Box>
     </Box>
   );
 }
