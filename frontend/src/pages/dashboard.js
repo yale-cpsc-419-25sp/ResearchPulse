@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { styled, alpha } from '@mui/material/styles';
 import {Box, Drawer, List, AppBar, Toolbar, Typography, Divider, Button, IconButton} from '@mui/material';
 import InputBase from '@mui/material/InputBase';
@@ -19,7 +19,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import InfoIcon from '@mui/icons-material/Info';
 import Grid from '@mui/material/Grid2';
-
+import { get_my_following } from '../api';
 
 const drawerSize = 240;
 const drawerItems = [
@@ -124,6 +124,21 @@ const Boxes = styled(Box)(({ theme, height }) => ({
   padding: theme.spacing(2),
 }));
 
+const myFollowingBox = ({height, width, type, title, attributes}) => (
+  <Button sx={{textTransform: 'none'}}>
+    <Boxes height={height} width={width}>
+      <Typography variant={type} color="black">
+        {title}
+        {attributes.map((attr) => (
+          <Box>
+            {attr?.first_name} {attr?.last_name}
+          </Box>
+        ))}
+      </Typography>
+    </Boxes>
+  </Button>
+);
+
 const ProfileBox = ({height, width, type, title, attributes}) => (
   <Button sx={{textTransform: 'none'}}>
     <Boxes height={height} width={width}>
@@ -131,7 +146,9 @@ const ProfileBox = ({height, width, type, title, attributes}) => (
         {title}
         {attributes.map((attr) => (
           <Box>
-            {attr}
+            {Object.keys(attr).map((key, index) => (
+              <Typography key={index}>{attr[key]}</Typography>
+            ))}
           </Box>
         ))}
       </Typography>
@@ -143,6 +160,15 @@ function Dashboard() {
 
   const [auth] = useState(true);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [myFollowing, setMyFollowing] = useState([]);
+  
+  useEffect(() => {
+    async function fetchData() {
+      setMyFollowing(await get_my_following('12345'));
+    }
+    fetchData();
+  }, [])
+
 
   // const handleChange = (event) => {
   //   setAuth(event.target.checked);
@@ -259,10 +285,10 @@ function Dashboard() {
               {ProfileBox({height: 20,  width:800, type: 'h5', title: 'My Feed', attributes: [""]})}
             </Grid>
             <Grid item style={{width: "100%"}}>
-              {ProfileBox({height: 200, width: 500, type: 'h5', title: 'My Following', attributes: [""]})}
-              {ProfileBox({height: 200,  width: 500, type: 'h5', title: 'Papers by My Following', attributes: [""]})}
-              {ProfileBox({height: 200,  width: 500, type: 'h5', title: 'Starred Papers', attributes: [""]})}
-              {ProfileBox({height: 200,  width: 500, type: 'h5', title: 'Groups', attributes: [""]})}
+              {myFollowingBox({height: 400, width: 500, type: 'h5', title: 'My Following', attributes: myFollowing})}
+              {myFollowingBox({height: 400,  width: 500, type: 'h5', title: 'Papers by My Following', attributes: myFollowing})}
+              {ProfileBox({height: 400,  width: 500, type: 'h5', title: 'Starred Papers', attributes: [""]})}
+              {ProfileBox({height: 400,  width: 500, type: 'h5', title: 'Groups', attributes: [""]})}
             </Grid>
           </Grid>
       </Box>

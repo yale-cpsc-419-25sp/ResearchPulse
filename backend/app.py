@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+from flask_cors import CORS
 import mysql.connector
 from queries import get_person_data, get_group_data, insert_following, insert_group_member, get_discussion_groups, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment
 from database_defs import Papers, People, Authors, DiscussionGroups, GroupMembers, PeopleFollowing, StarredPapers, Comments
@@ -6,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from database_defs import engine
 
 app = Flask(__name__)
+CORS(app)
 app.secret_key = 'research_pulse_secret_key'
 Session = sessionmaker(bind=engine)
 
@@ -18,6 +20,12 @@ def get_db_connection():
         database="researchpulse",
         port=3306
     )
+
+@app.route("/userID")
+def members():
+    data = {"userID": ["Member1", "Member2", "Member3"]}
+    return jsonify(data)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -39,6 +47,22 @@ def index():
             return render_template('login.html', error='Invalid Person ID')
             
     return render_template('login.html')
+
+@app.route('/following', methods=['POST'])
+def following():
+
+    data = request.get_json()
+    print(data)
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    following = get_following(cursor, data['id'])
+
+    cursor.close()
+    conn.close()
+
+    return following
 
 @app.route('/dashboard', methods=['GET'])
 def dashboard():

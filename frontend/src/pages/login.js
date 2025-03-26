@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormLabel from '@mui/material/FormLabel';
@@ -38,7 +38,7 @@ function Login() {
   const [userId, setUserId] = useState('');
 
   const handleSubmit = () => {
-    fetch('/api/login', {
+    fetch('http://localhost:5000/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include', // need to set up cookies for this
