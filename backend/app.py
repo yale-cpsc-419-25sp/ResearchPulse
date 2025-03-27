@@ -1,16 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, Blueprint
 from flask_cors import CORS
 import mysql.connector
 from queries import get_person_data, get_group_data, insert_following, insert_group_member, get_discussion_groups, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment
-from database_defs import Papers, People, Authors, DiscussionGroups, GroupMembers, PeopleFollowing, StarredPapers, Comments
+from database_defs import Papers, People, StarredPapers, Comments
 from sqlalchemy.orm import sessionmaker
 from database_defs import engine
+from flask_bcrypt import Bcrypt
+from flask_session import Session
+from uuid import uuid4
 
 app = Flask(__name__)
 CORS(app)
 app.secret_key = 'research_pulse_secret_key'
 Session = sessionmaker(bind=engine)
-
+bcrypt = Bcrypt(app)
 # Database connection
 def get_db_connection():
     return mysql.connector.connect(
@@ -21,11 +24,96 @@ def get_db_connection():
         port=3306
     )
 
-@app.route("/userID")
-def members():
-    data = {"userID": ["Member1", "Member2", "Member3"]}
-    return jsonify(data)
+test_users = {}
 
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    user_id = data.get('person_id')
+    password = data.get('password')
+
+    if not user_id or not password:
+        return jsonify({'success': False, "error": "Missing required fields"}), 400
+
+    test_users[user_id] = {
+        'password': password, 
+        'first_name': 'Test',  # Default values for testing
+        'last_name': 'User'
+    }
+
+    return jsonify({
+        'success': True,
+        'person_id': user_id
+    }), 201
+
+    # try:
+    #     conn = get_db_connection()
+    #     cursor = conn.cursor()
+    #     cursor.execute("""
+    #         INSERT INTO people (person_id, first_name, last_name, password)
+    #         VALUES (%s, %s, %s, %s)
+    #     """, (person_id, first_name, last_name, password))
+
+    #     conn.commit()
+    #     cursor.close()
+    #     conn.close(
+    #     )
+
+    #     return jsonify({
+    #         'success': True,
+    #         'user_id': person_id}), 201
+    # except Exception as e:
+    #     print(e)
+    #     return jsonify({
+    #         'success': False,
+    #         'error': str(e)
+    #     }), 500
+
+@app.route('/login', methods=['POST'])
+def login_user():
+    data = request.get_json()
+    person_id = data.get('person_id')
+    password = data.get('password')
+
+    if not person_id or not password:
+        return jsonify({'success': False,"error": "Missing credentials"}), 400
+
+    user = test_users.get(person_id)
+    
+    if not user:
+        return jsonify({'success': False, "error": "User not found"}), 401
+    
+    # Simple password check (no hashing for testing)
+    if user['password'] != password:
+        return jsonify({'success': False, "error": "Invalid password"}), 401
+
+    # Set session
+    session['person_id'] = person_id
+
+    return jsonify({
+        'success': True,
+        'person_id': person_id
+    }), 200
+
+    # conn = get_db_connection()
+    # cursor = conn.cursor(dictionary=True)
+    # cursor.execute("SELECT * FROM people WHERE person_id = %s", (person_id,))
+    # person = cursor.fetchone()
+    # cursor.close()
+    # conn.close()
+
+    # if not person:
+    #     return jsonify({'success': False,"error": "Invalid Person ID"}), 401
+    
+    # if not bcrypt.check_password_hash(person['password'], password):
+    #     return jsonify({'success': False, "error": "Invalid password"}), 401
+
+    # session['person_id'] = person_id
+
+    # return jsonify({
+    #     'success': True,
+    #     'user_id': person_id
+    # }), 200
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -52,7 +140,6 @@ def index():
 def following():
 
     data = request.get_json()
-    print(data)
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -63,6 +150,22 @@ def following():
     conn.close()
 
     return following
+
+@app.route('/starredpapers', methods=['POST'])
+def starred_papers():
+
+    data = request.get_json()
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    starred = get_starred_papers(cursor, data['id'])
+
+    cursor.close()
+    conn.close()
+
+    return starred
+
 
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
@@ -350,52 +453,16 @@ def add_comment(paper_id):
 
     except Exception as e:
         return f"Error: {str(e)}"
-        
-@app.route('/api/login', methods=['POST'])
-def login():
-    data = request.json
-    person_id = data.get('person_id')
 
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM people WHERE person_id = %s", (person_id,))
-    person = cursor.fetchone()
-    cursor.close()
-    conn.close()
+# @app.route('/logout')
+# def logout():
+#     session.clear()
+#     return redirect(url_for('index'))
 
-    if person:
-        session['person_id'] = person_id
-        return jsonify({'success': True})
-    return jsonify({'error': 'Invalid Person ID'}), 401
-
-@app.route('/api/signup', methods=['POST'])
-def signup():
-    data = request.json
-
-    first_name = data.get('first_name')
-    last_name = data.get('last_name')
-
-    if not first_name or not last_name:
-        return jsonify({'success': False, 'error': 'Missing required fields'}), 400
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        INSERT INTO people (first_name, last_name)
-        VALUES (%s, %s)
-    """, (first_name, last_name))
-    
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    return jsonify({'success': True})
-
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
 def logout():
-    session.clear()
-    return redirect(url_for('index'))
+    session.pop('person_id')
+    return '200'
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True, port=5000)
