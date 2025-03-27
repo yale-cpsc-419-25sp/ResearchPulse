@@ -19,7 +19,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import InfoIcon from '@mui/icons-material/Info';
 import Grid from '@mui/material/Grid2';
-import { get_my_following } from '../api';
+import { get_my_following, get_my_starred_papers, get_my_groups } from '../api';
 
 const drawerSize = 240;
 const drawerItems = [
@@ -138,7 +138,20 @@ const myFollowingBox = ({height, width, type, title, attributes}) => (
     </Boxes>
   </Button>
 );
-
+const myStarredBox = ({height, width, type, title, attributes}) => (
+  <Button sx={{textTransform: 'none'}}>
+    <Boxes height={height} width={width}>
+      <Typography variant={type} color="black">
+        {title}
+        {attributes.map((attr) => (
+          <Box>
+            {attr?.paper_id}
+          </Box>
+        ))}
+      </Typography>
+    </Boxes>
+  </Button>
+);
 const ProfileBox = ({height, width, type, title, attributes}) => (
   <Button sx={{textTransform: 'none'}}>
     <Boxes height={height} width={width}>
@@ -161,19 +174,15 @@ function Dashboard() {
   const [auth] = useState(true);
   const [anchorEl, setAnchorEl] = useState(null);
   const [myFollowing, setMyFollowing] = useState([]);
+  const [myStarredPapers, setStarredPapers] = useState([]);
   
   useEffect(() => {
     async function fetchData() {
       setMyFollowing(await get_my_following('12345'));
+      setStarredPapers(await get_my_starred_papers('12345'));
     }
     fetchData();
   }, [])
-
-
-  // const handleChange = (event) => {
-  //   setAuth(event.target.checked);
-  // };
-  // TODO: Backend connection
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -286,9 +295,9 @@ function Dashboard() {
             </Grid>
             <Grid item style={{width: "100%"}}>
               {myFollowingBox({height: 400, width: 500, type: 'h5', title: 'My Following', attributes: myFollowing})}
-              {myFollowingBox({height: 400,  width: 500, type: 'h5', title: 'Papers by My Following', attributes: myFollowing})}
-              {ProfileBox({height: 400,  width: 500, type: 'h5', title: 'Starred Papers', attributes: [""]})}
-              {ProfileBox({height: 400,  width: 500, type: 'h5', title: 'Groups', attributes: [""]})}
+              {ProfileBox({height: 400,  width: 500, type: 'h5', title: 'Papers by My Following', attributes: ['']})}
+              {myStarredBox({height: 400,  width: 500, type: 'h5', title: 'Starred Papers', attributes: myStarredPapers})}
+              {ProfileBox({height: 400,  width: 500, type: 'h5', title: 'Groups', attributes: ['']})}
             </Grid>
           </Grid>
       </Box>

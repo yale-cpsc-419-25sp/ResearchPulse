@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormLabel from '@mui/material/FormLabel';
@@ -36,42 +36,44 @@ function Login() {
   const [userError, setUserError] = useState(false);
   const [userErrorMessage, setUserErrorMessage] = useState('');
   const [userId, setUserId] = useState('');
+  const[userPassword, setUserPassword] = useState('');
 
   const handleSubmit = () => {
-    fetch('http://localhost:5000/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // need to set up cookies for this
-      body: JSON.stringify({ person_id: userId })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          window.location.href = '/dashboard';
-        } else {
-          setUserError(true);
-          setUserErrorMessage(data.error || 'Login failed');
-        }
-      })
-      .catch(() => {
-        setUserError(true);
-        setUserErrorMessage('Server error');
-      });
-  };
-
-  const validateInputs = () => {
-    // TODO
-    // Send inputs (username and password) to backend for validation
-    // If not validated show error message, else authenticate and redirect page
-
-    if (!userId) {
+    if (!userId || !userPassword) {
       setUserError(true);
-      setUserErrorMessage('Please enter a valid User ID.');
-    } else {
-      setUserError(false);
-      setUserErrorMessage('');
-      handleSubmit();
+      setUserErrorMessage('Please enter both ID and password');
+      return;
     }
+
+    fetch('http://localhost:5000/login', {
+      
+      method: 'POST',
+      headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+          person_id: userId,
+          password: userPassword
+      }),
+    })
+    .then(async res => {
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.error || 'Login failed');
+        }
+        return data;
+    })
+    .then(data => {
+        if (data.success) {
+            sessionStorage.setItem('person_id', data.person_id);
+            window.location.href = '/dashboard';
+        }
+    })
+    .catch(err => {
+        setUserError(true);
+        setUserErrorMessage(err.message);
+    });
   };
 
   return (
@@ -93,26 +95,36 @@ function Login() {
             <TextField
               error={userError}
               helperText={userErrorMessage}
-              id="user_id"
-              type="user_id"
+              type="text"
+              value={userId}
               name="user_id"
               placeholder="Enter your ID"
               autoComplete="user_id"
-              autoFocus
-              required
-              fullWidth
               variant="outlined"
               color={userError ? 'error' : 'primary'}
               onChange={(event) => setUserId(event.target.value)}
+            />
+          </FormControl>
+          <FormControl>
+            <FormLabel htmlFor="password">Password</FormLabel>
+            <TextField
+              error={userError}
+              helperText={userErrorMessage}
+              type="password"
+              value={userPassword}
+              name="password"
+              placeholder="Enter your Password"
+              autoComplete="password"
+              variant="outlined"
+              color={userError ? 'error' : 'primary'}
+              onChange={(event) => setUserPassword(event.target.value)}
             />
           </FormControl>
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            onClick={validateInputs}
-          >
-            Log in
+            onClick={handleSubmit}>Log in
           </Button>
         </Card>
       </LogInContainer>

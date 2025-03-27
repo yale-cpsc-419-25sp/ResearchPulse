@@ -34,31 +34,39 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 
 function Signup() {
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    affiliation: '',
-    bio: ''
+    person_id: '',
+    password: '',
   });
 
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSignup = () => {
-    fetch('/api/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(formData)
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
+  const handleSignup = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/signup', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+              person_id: formData.person_id,
+              password: formData.password
+          })
+      });
+
+      if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Signup failed');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+          sessionStorage.setItem('person_id', data.person_id);
           navigate('/login');
-        } else {
-          setError(data.error || 'Sign-up failed');
-        }
-      })
-      .catch(() => setError('Server error, try again later'));
+      }
+  } catch (err) {
+      setError(err.message);
+  }
   };
 
   return (
@@ -78,34 +86,35 @@ function Signup() {
             </Typography>
           )}
           <FormControl>
-            <FormLabel htmlFor="first_name">First Name</FormLabel>
+            <FormLabel htmlFor="person_id">User ID</FormLabel>
             <TextField
-              id="first_name"
-              name="first_name"
-              placeholder="Enter your first name"
+              id="person_id"
+              name="person_id"
+              placeholder="Enter your ID"
               variant="outlined"
               fullWidth
               required
-              value={formData.first_name}
+              value={formData.person_id}
               onChange={(e) =>
-                setFormData({ ...formData, first_name: e.target.value })
+                setFormData({ ...formData, person_id: e.target.value })
               }
             />
           </FormControl>
 
           <FormControl>
-            <FormLabel htmlFor="last_name">Last Name</FormLabel>
+            <FormLabel htmlFor="password">Password</FormLabel>
             <TextField
-              id="last_name"
-              name="last_name"
-              placeholder="Enter your last name"
-              variant="outlined"
-              fullWidth
-              required
-              value={formData.last_name}
-              onChange={(e) =>
-                setFormData({ ...formData, last_name: e.target.value })
-              }
+                id="password"
+                name="password"
+                type="password"
+                placeholder="Enter your password"
+                variant="outlined"
+                fullWidth
+                required
+                value={formData.password}
+                onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                }
             />
           </FormControl>
 
