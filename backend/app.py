@@ -1,19 +1,22 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, Blueprint
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from flask_cors import CORS
 import mysql.connector
-from queries import get_person_data, get_group_data, insert_following, insert_group_member, get_discussion_groups, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment
-from database_defs import Papers, People, StarredPapers, Comments
+from queries import get_group_data, insert_following, insert_group_member, get_discussion_groups, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment
+from database_defs import Papers, People, StarredPapers
 from sqlalchemy.orm import sessionmaker
 from database_defs import engine
-from flask_bcrypt import Bcrypt
 from flask_session import Session
-from uuid import uuid4
+import jwt
+import datetime
+from functools import wraps
 
 app = Flask(__name__)
 CORS(app)
 app.secret_key = 'research_pulse_secret_key'
+app.config['JWT_SECRET_KEY'] = 'research_pulse_secret_key'  # Change this!
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(hours=1)
 Session = sessionmaker(bind=engine)
-bcrypt = Bcrypt(app)
+
 # Database connection
 def get_db_connection():
     return mysql.connector.connect(
@@ -24,20 +27,53 @@ def get_db_connection():
         port=3306
     )
 
+# Token requirements for holding each sesssion, used for authentication
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        if 'Authorization' in request.headers:
+            token = request.headers['Authorization'].split(" ")[1]
+        
+        if not token:
+            return jsonify({'message': 'Token is missing!'}), 401
+
+        try:
+            data = jwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=["HS256"])
+            current_user = data['person_id']
+        except Exception as e:
+            return jsonify({'message': 'Token is invalid!', 'error': str(e)}), 401
+
+        return f(current_user, *args, **kwargs)
+    return decorated
+
+@app.route('/refresh', methods=['POST'])
+@token_required
+def refresh_token(current_user):
+    new_token = jwt.encode({
+        'person_id': current_user,
+        'exp': datetime.datetime.now(datetime.timezone.utc) + app.config['JWT_ACCESS_TOKEN_EXPIRES']
+    }, app.config['JWT_SECRET_KEY'])
+    
+    return jsonify({
+        'success': True,
+        'token': new_token
+    }), 200
+
+#default thing for signup, ignore
 test_users = {}
 
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
     user_id = data.get('person_id')
-    password = data.get('password')
 
-    if not user_id or not password:
+    if not user_id:
         return jsonify({'success': False, "error": "Missing required fields"}), 400
 
     test_users[user_id] = {
-        'password': password, 
-        'first_name': 'Test',  # Default values for testing
+        'first_name': 'Test',# Default values for testing, ignore for now
         'last_name': 'User'
     }
 
@@ -46,74 +82,73 @@ def signup():
         'person_id': user_id
     }), 201
 
-    # try:
-    #     conn = get_db_connection()
-    #     cursor = conn.cursor()
-    #     cursor.execute("""
-    #         INSERT INTO people (person_id, first_name, last_name, password)
-    #         VALUES (%s, %s, %s, %s)
-    #     """, (person_id, first_name, last_name, password))
-
-    #     conn.commit()
-    #     cursor.close()
-    #     conn.close(
-    #     )
-
-    #     return jsonify({
-    #         'success': True,
-    #         'user_id': person_id}), 201
-    # except Exception as e:
-    #     print(e)
-    #     return jsonify({
-    #         'success': False,
-    #         'error': str(e)
-    #     }), 500
-
 @app.route('/login', methods=['POST'])
 def login_user():
     data = request.get_json()
     person_id = data.get('person_id')
-    password = data.get('password')
 
-    if not person_id or not password:
+    if not person_id:
         return jsonify({'success': False,"error": "Missing credentials"}), 400
 
-    user = test_users.get(person_id)
-    
-    if not user:
-        return jsonify({'success': False, "error": "User not found"}), 401
-    
-    # Simple password check (no hashing for testing)
-    if user['password'] != password:
-        return jsonify({'success': False, "error": "Invalid password"}), 401
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM people WHERE person_id = %s", (person_id,))
+    person = cursor.fetchone()
+    cursor.close()
+    conn.close()
 
-    # Set session
-    session['person_id'] = person_id
-
+    if not person:
+        return jsonify({'success': False,"error": "Invalid Person ID"}), 401
+    
+    # Create JWT token
+    token = jwt.encode({
+        'person_id': person_id,
+        'exp': datetime.datetime.now(datetime.timezone.utc) + app.config['JWT_ACCESS_TOKEN_EXPIRES']
+    }, app.config['JWT_SECRET_KEY'])
+    
     return jsonify({
         'success': True,
+        'token': token,
         'person_id': person_id
     }), 200
 
-    # conn = get_db_connection()
-    # cursor = conn.cursor(dictionary=True)
-    # cursor.execute("SELECT * FROM people WHERE person_id = %s", (person_id,))
-    # person = cursor.fetchone()
-    # cursor.close()
-    # conn.close()
+@app.route('/dashboard')
+@token_required
+def dashboard(person_id):
 
-    # if not person:
-    #     return jsonify({'success': False,"error": "Invalid Person ID"}), 401
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        # Get user info
+        cursor.execute("SELECT * FROM people WHERE person_id = %s", (person_id,))
+        person = cursor.fetchone()
+
+        if not person:
+            return jsonify({'success': False, 'error': 'Invalid user'}), 401
+
+        # Get following
+        following = get_following(cursor, person_id)
+        
+        # Get starred papers
+        starred_papers = get_starred_papers(cursor, person_id)
+
+        #TODO: Add more user info here and make sure to jsonify it below
+
+        return jsonify({
+            'success': True,
+            'person_id': person_id,
+            'name': f"{person['first_name']} {person['last_name']}",
+            'following': following,
+            'starredPapers': starred_papers,
+        })
     
-    # if not bcrypt.check_password_hash(person['password'], password):
-    #     return jsonify({'success': False, "error": "Invalid password"}), 401
-
-    # session['person_id'] = person_id
-
-    # return jsonify({
-    #     'success': True,
-    #     'user_id': person_id
-    # }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+        
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -165,33 +200,6 @@ def starred_papers():
     conn.close()
 
     return starred
-
-
-@app.route('/dashboard', methods=['GET'])
-def dashboard():
-    # Ensure the user is logged in
-    if 'person_id' not in session:
-        return redirect(url_for('index'))
-
-    # Get random papers for discover feed - only titles
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    random_papers = get_random_papers(cursor)
-
-    # Get following list
-    following = get_following(cursor, session['person_id'])
-
-    # Get starred papers
-    starred_papers = get_starred_papers(cursor, session['person_id'])
-
-    # Get the user's discussion groups
-    discussion_groups = get_discussion_groups(cursor, session['person_id'])
-
-    cursor.close()
-    conn.close()
-
-    return render_template('dashboard.html', random_papers=random_papers, 
-                           following=following, starred_papers=starred_papers, discussion_groups=discussion_groups)
 
 @app.route('/follow', methods=['POST'])
 def follow():
@@ -399,17 +407,15 @@ def unstar_paper():
     session_db.commit()
     return redirect(request.referrer)
 
-@app.route('/id/', defaults={'person_id': None})
-@app.route('/id/<person_id>', methods=["GET"])
-def get_person_route(person_id):
-    """API endpoint to get person data by ID."""
-    person_data = get_person_data(person_id)
-    
-    if person_data:
-        return render_template('person_id.html', person=person_data)
-    else:
-        return jsonify({"error": "Person not found"}), 404
+@app.route('/user/<person_id>', methods=['GET'])
+def get_user(person_id):
+    user = get_person_by_id(person_id)
+    if user:
+        return jsonify(user)
+    return jsonify({"error": "User not found"}), 404
 
+if __name__ == '__main__':
+    app.run(debug=True)
 @app.route('/group/<group_id>', methods=["GET"])
 def get_group_route(group_id):
     """API endpoint to get group data by ID."""
@@ -453,11 +459,6 @@ def add_comment(paper_id):
 
     except Exception as e:
         return f"Error: {str(e)}"
-
-# @app.route('/logout')
-# def logout():
-#     session.clear()
-#     return redirect(url_for('index'))
 
 @app.route('/logout', methods=['POST'])
 def logout():

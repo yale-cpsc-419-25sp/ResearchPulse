@@ -36,25 +36,22 @@ function Login() {
   const [userError, setUserError] = useState(false);
   const [userErrorMessage, setUserErrorMessage] = useState('');
   const [userId, setUserId] = useState('');
-  const[userPassword, setUserPassword] = useState('');
 
   const handleSubmit = () => {
-    if (!userId || !userPassword) {
+    if (!userId) {
       setUserError(true);
-      setUserErrorMessage('Please enter both ID and password');
+      setUserErrorMessage('Please enter ID');
       return;
     }
 
     fetch('http://localhost:5000/login', {
-      
       method: 'POST',
       headers: { 
           'Content-Type': 'application/json',
           'Accept': 'application/json'
       },
       body: JSON.stringify({
-          person_id: userId,
-          password: userPassword
+          person_id: userId
       }),
     })
     .then(async res => {
@@ -66,8 +63,9 @@ function Login() {
     })
     .then(data => {
         if (data.success) {
-            sessionStorage.setItem('person_id', data.person_id);
-            window.location.href = '/dashboard';
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('person_id', data.person_id);
+          window.location.href = '/dashboard';
         }
     })
     .catch(err => {
@@ -103,21 +101,6 @@ function Login() {
               variant="outlined"
               color={userError ? 'error' : 'primary'}
               onChange={(event) => setUserId(event.target.value)}
-            />
-          </FormControl>
-          <FormControl>
-            <FormLabel htmlFor="password">Password</FormLabel>
-            <TextField
-              error={userError}
-              helperText={userErrorMessage}
-              type="password"
-              value={userPassword}
-              name="password"
-              placeholder="Enter your Password"
-              autoComplete="password"
-              variant="outlined"
-              color={userError ? 'error' : 'primary'}
-              onChange={(event) => setUserPassword(event.target.value)}
             />
           </FormControl>
           <Button

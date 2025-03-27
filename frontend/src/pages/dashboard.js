@@ -19,7 +19,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import InfoIcon from '@mui/icons-material/Info';
 import Grid from '@mui/material/Grid2';
-import { get_my_following, get_my_starred_papers, get_my_groups } from '../api';
 
 const drawerSize = 240;
 const drawerItems = [
@@ -173,16 +172,53 @@ function Dashboard() {
 
   const [auth] = useState(true);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [myID, setMyID] = useState(null);
+  const [myName, setMyName] = useState(null);
   const [myFollowing, setMyFollowing] = useState([]);
   const [myStarredPapers, setStarredPapers] = useState([]);
-  
+
   useEffect(() => {
-    async function fetchData() {
-      setMyFollowing(await get_my_following('12345'));
-      setStarredPapers(await get_my_starred_papers('12345'));
-    }
-    fetchData();
-  }, [])
+    const token = localStorage.getItem('token');
+    const person_id = localStorage.getItem('person_id');
+
+    if (!token || !person_id) {
+      window.location.href = '/';
+      return;
+    }  
+      
+    fetch('http://localhost:5000/dashboard', {
+        method: 'GET',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+    })
+    .then(async res => {
+      if (res.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('token');
+        localStorage.removeItem('person_id');
+        window.location.href = '/';
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok) {
+          throw new Error(data.error || 'Failed to fetch data');
+      }
+      return data;
+    })
+    .then(data => {
+        setMyID(data.person_id);
+        setMyName(data.name);
+        setMyFollowing(data.following);
+        setStarredPapers(data.starredPapers);
+    })
+    .catch(error => {
+      console.error('Error fetching dashboard data:', error);
+      window.location.href = '/';
+    });
+  }, []);
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -263,6 +299,9 @@ function Dashboard() {
         anchor="left"
       >
         <Toolbar />
+        <Typography>
+          Welcome, {myName}
+        </Typography>
         {drawerItems.map((component) => DrawerSection(component))}
         <List>
             <ListItem disablePadding sx={{position: "fixed", bottom: 10, width: drawerSize}}>

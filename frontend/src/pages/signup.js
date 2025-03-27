@@ -35,7 +35,6 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 function Signup() {
   const [formData, setFormData] = useState({
     person_id: '',
-    password: '',
   });
 
   const [error, setError] = useState('');
@@ -49,8 +48,7 @@ function Signup() {
               'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-              person_id: formData.person_id,
-              password: formData.password
+              person_id: formData.person_id
           })
       });
 
@@ -98,23 +96,6 @@ function Signup() {
               onChange={(e) =>
                 setFormData({ ...formData, person_id: e.target.value })
               }
-            />
-          </FormControl>
-
-          <FormControl>
-            <FormLabel htmlFor="password">Password</FormLabel>
-            <TextField
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Enter your password"
-                variant="outlined"
-                fullWidth
-                required
-                value={formData.password}
-                onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                }
             />
           </FormControl>
 
