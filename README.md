@@ -34,10 +34,17 @@ Enter frontend folder and run npm install:
 npm install
 ```
 
-Start server:
+Start the server:
 
 ```bash
 npm start
 ```
+
+Open new terminal and enter the backend folder to start backend server:
+
+```bash
+python app.py
+```
+
 
 
