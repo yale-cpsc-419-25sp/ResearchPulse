@@ -113,6 +113,7 @@ def login_user():
     }), 200
 
 @app.route('/dashboard')
+@token_required
 def dashboard(person_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
