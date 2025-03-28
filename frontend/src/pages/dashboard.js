@@ -2,60 +2,33 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import {Box, Toolbar, Typography, Divider} from '@mui/material';
 import Grid from '@mui/material/Grid2';
-import { CustomAppBar } from './pagebar';
-import { ProfileBox, myFollowingBox, myStarredBox } from './layouts';
-import { PageDrawer, drawerItems } from './pagedrawer';
+import { CustomAppBar } from './components/pagebar';
+import { ProfileBox, myFollowingBox, myStarredBox } from './components/layouts';
+import { PageDrawer, drawerItems } from './components/pagedrawer';
+import { fetchUserData } from '../api';
 
 // Main Dashboard Page that displays the user's information
 
 function Dashboard() {
 
-  const [myID, setMyID] = useState(null);
   const [myName, setMyName] = useState(null);
   const [myFollowing, setMyFollowing] = useState([]);
   const [myStarredPapers, setStarredPapers] = useState([]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const person_id = localStorage.getItem('person_id');
-
-    if (!token || !person_id) {
-      window.location.href = '/';
-      return;
-    }  
-      
-    fetch('http://localhost:5000/dashboard', {
-        method: 'GET',
-        headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-    })
-    .then(async res => {
-      if (res.status === 401) {
-        // Token expired or invalid
-        localStorage.removeItem('token');
-        localStorage.removeItem('person_id');
-        window.location.href = '/';
-        return;
-      }
-      const data = await res.json();
-      if (!res.ok) {
-          throw new Error(data.error || 'Failed to fetch data');
-      }
-      return data;
-    })
-    .then(data => {
-        setMyID(data.person_id);
+    const loadData = async () => {
+      try {
+        const data = await fetchUserData();
         setMyName(data.name);
         setMyFollowing(data.following);
         setStarredPapers(data.starredPapers);
-    })
-    .catch(error => {
-      console.error('Error fetching dashboard data:', error);
-      window.location.href = '/';
-    });
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        window.location.href = '/';
+      }
+    };
+
+    loadData();
   }, []);
 
   //TODO: Make ResearchPulse Heading a Button back to homepage
@@ -78,9 +51,7 @@ function Dashboard() {
         </Typography>
         <Divider/>
           <Grid container spacing={3}>
-            <Grid size="auto">
-              {ProfileBox({height: 20,  width:800, type: 'h5', title: 'My Feed', attributes: [""]})}
-            </Grid>
+            <br/>
             <Grid item style={{width: "100%"}}>
               {myFollowingBox({height: 400, width: 500, type: 'h5', title: 'My Following', attributes: myFollowing})}
               {ProfileBox({height: 400,  width: 500, type: 'h5', title: 'Papers by My Following', attributes: ['']})}

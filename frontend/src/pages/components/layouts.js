@@ -49,6 +49,21 @@ const ProfileBox = ({height, width, type, title, attributes}) => (
   </Button>
 );
 
+const HeaderBox = ({height, width, type, title, attributes}) => (
+    <Boxes height={height} width={width} >
+      <Typography variant={type} color="black" >
+        {title}
+        {attributes.map((attr) => (
+          <Box>
+            {Object.keys(attr).map((key, index) => (
+              <Typography key={index}>{attr[key]}</Typography>
+            ))}
+          </Box>
+        ))}
+      </Typography>
+    </Boxes>
+);
+
 const Boxes = styled(Box)(({ theme, height }) => ({
   backgroundColor: theme.palette.action.hover,
   borderRadius: theme.shape.borderRadius,
@@ -97,4 +112,4 @@ const Search = styled(Box)(({ theme }) => ({
     },
   }));
   
-  export { ProfileBox, myFollowingBox, myStarredBox, Boxes, Search, SearchIconWrapper, StyledInputBase };  
+  export { HeaderBox, ProfileBox, myFollowingBox, myStarredBox, Boxes, Search, SearchIconWrapper, StyledInputBase };  

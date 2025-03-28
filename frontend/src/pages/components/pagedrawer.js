@@ -12,7 +12,7 @@ import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import GroupRemoveIcon from '@mui/icons-material/GroupRemove';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 // Drawer on each side of the page
 

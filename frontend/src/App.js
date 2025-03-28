@@ -4,6 +4,7 @@ import Home from './pages/home';
 import Login from './pages/login';
 import Signup from './pages/signup';
 import Dashboard from './pages/dashboard';
+import Profile from './pages/profile';
 
 function App() {
   return (
@@ -13,7 +14,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<div>Profile</div>} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/followedpapers" element={<div>Followed Papers</div>} />
         <Route path="/followedauthors" element={<div>Followed Authors</div>} />
         <Route path="/starred" element={<div>Starred</div>} />

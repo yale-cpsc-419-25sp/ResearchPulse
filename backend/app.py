@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from flask_cors import CORS
 import mysql.connector
-from queries import get_group_data, insert_following, insert_group_member, get_discussion_groups, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment
+from queries import get_person_data, get_group_data, insert_following, insert_group_member, get_discussion_groups, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment
 from database_defs import Papers, People, StarredPapers
 from sqlalchemy.orm import sessionmaker
 from database_defs import engine
@@ -134,10 +134,12 @@ def dashboard(person_id):
         starred_papers = get_starred_papers(cursor, person_id)
 
         #TODO: Add more user info here and make sure to jsonify it below
+        person = get_person_data(person_id)
 
         return jsonify({
             'success': True,
             'person_id': person_id,
+            'person_dict': person,
             'name': f"{person['first_name']} {person['last_name']}",
             'following': following,
             'starredPapers': starred_papers,
