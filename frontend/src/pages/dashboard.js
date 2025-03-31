@@ -1,9 +1,10 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import {Box, Toolbar, Typography, Divider} from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { CustomAppBar } from './components/pagebar';
-import { ProfileBox, myFollowingBox, myStarredBox } from './components/layouts';
+import { ProfileBox, myFollowingBox, myStarredBox, myGroupBox} from './components/layouts';
 import { PageDrawer, drawerItems } from './components/pagedrawer';
 import { fetchUserData } from '../api';
 
@@ -13,21 +14,27 @@ function Dashboard() {
 
   const [myName, setMyName] = useState(null);
   const [myFollowing, setMyFollowing] = useState([]);
+  const [myFollowers, setMyFollowers] = useState([]);
   const [myStarredPapers, setStarredPapers] = useState([]);
+  const [myGroups, setGroups] = useState([]);
+
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const data = await fetchUserData();
+        console.log('Fetched data:', data);  // <-- Add this to debug
         setMyName(data.name);
-        setMyFollowing(data.following);
+        setMyFollowing(data.person_dict.following || []);
+        setMyFollowers(data.person_dict.followers || []);
         setStarredPapers(data.starredPapers);
+        setGroups(data.person_dict.groups || []);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         window.location.href = '/';
       }
     };
-
+  
     loadData();
   }, []);
 
@@ -53,10 +60,30 @@ function Dashboard() {
           <Grid container spacing={3}>
             <br/>
             <Grid item style={{width: "100%"}}>
-              {myFollowingBox({height: 400, width: 500, type: 'h5', title: 'My Following', attributes: myFollowing})}
-              {ProfileBox({height: 400,  width: 500, type: 'h5', title: 'Papers by My Following', attributes: ['']})}
-              {myStarredBox({height: 400,  width: 500, type: 'h5', title: 'Starred Papers', attributes: myStarredPapers})}
-              {ProfileBox({height: 400,  width: 500, type: 'h5', title: 'Groups', attributes: ['']})}
+              <Link to="/following" style={{ textDecoration: 'none' }}>
+                {myFollowingBox({
+                  height: 400, 
+                  width: 500, 
+                  type: 'h5', 
+                  title: 'My Following', 
+                  attributes: myFollowing, 
+                  titleStyle: { fontWeight: 'bold' },
+                  page: '/following'
+                })}
+              </Link> 
+              {myFollowingBox({height: 400,  width: 500, type: 'h5', title: 'My Followers', titleStyle: { fontWeight: 'bold' }, attributes: myFollowers})}
+              <Link to="/starred" style={{ textDecoration: 'none' }}>
+                {myStarredBox({
+                  height: 400, 
+                  width: 500, 
+                  type: 'h5', 
+                  title: 'Starred Papers', 
+                  attributes: myStarredPapers, 
+                  titleStyle: { fontWeight: 'bold' },
+                  page: '/starred'
+                })}
+              </Link> 
+              {myGroupBox({height: 400,  width: 500, type: 'h5', title: 'Groups', titleStyle: { fontWeight: 'bold' }, attributes: myGroups})}
             </Grid>
           </Grid>
       </Box>

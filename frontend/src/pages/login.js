@@ -62,12 +62,13 @@ function Login() {
         return data;
     })
     .then(data => {
-        if (data.success) {
+      if (data.success) {
+          console.log('Token:', data.token);  // Check if token is valid
           localStorage.setItem('token', data.token);
           localStorage.setItem('person_id', data.person_id);
           window.location.href = '/dashboard';
-        }
-    })
+      }
+  })
     .catch(err => {
         setUserError(true);
         setUserErrorMessage(err.message);

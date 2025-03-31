@@ -132,7 +132,6 @@ def get_person_data(person_id):
         ]
 
         # Get starred papers
-        # Get starred papers
         starred_papers = (
             session.query(Papers)
             .join(StarredPapers, Papers.paper_id == StarredPapers.paper_id)
@@ -165,6 +164,7 @@ def get_group_data(group_id):
             return None  # Group not found
 
         group_dict = {
+            "group_id": group.group_id,
             "group_name": group.group_name,
             "description": group.description,
         }
@@ -176,8 +176,13 @@ def get_group_data(group_id):
             .filter(GroupMembers.group_id == group_id)
             .all()
         )
+
         group_dict["members"] = [
-            {"person_id": m.person_id, "first_name": m.first_name, "last_name": m.last_name}
+            {
+                "person_id": m.person_id,
+                "first_name": m.first_name,
+                "last_name": m.last_name,
+            }
             for m in members
         ]
 
@@ -189,6 +194,17 @@ def get_group_data(group_id):
 
     finally:
         session.close()
+        
+def get_starred_papers(cursor, person_id):
+    """Fetch all starred papers for a user from the database."""
+    query = """
+        SELECT p.paper_id, p.title, p.publication_date
+        FROM papers p
+        JOIN starred_papers s ON p.paper_id = s.paper_id
+        WHERE s.person_id = %s
+    """
+    cursor.execute(query, (person_id,))
+    return cursor.fetchall()
 
 def is_paper_starred(person_id, paper_id):
     """Check if a specific paper is already starred by the user."""
@@ -322,7 +338,7 @@ def get_paper_data(session, paper_id):
             for s in starred_by
         ]
     }
-
+    
     return paper_data
 
 def insert_comment(paper_id, person_id, comment_text, date=None):

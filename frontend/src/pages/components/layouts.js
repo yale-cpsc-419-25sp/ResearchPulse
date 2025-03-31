@@ -4,34 +4,50 @@ import { Button, Typography } from '@mui/material';
 
 // Styles and Boxes in the layout
 
-const myFollowingBox = ({height, width, type, title, attributes}) => (
+const myFollowingBox = ({height, width, type, title, titleStyle, attributes}) => (
   <Button sx={{textTransform: 'none'}}>
     <Boxes height={height} width={width}>
-      <Typography variant={type} color="black">
+      <Typography variant={type} color="black" style={titleStyle}>
         {title}
-        {attributes.map((attr) => (
-          <Box>
-            {attr?.first_name} {attr?.last_name}
-          </Box>
-        ))}
       </Typography>
+      {attributes.map((attr) => (
+        <Box key={attr?.person_id}>
+          {attr?.first_name} {attr?.last_name}
+        </Box>
+      ))}
     </Boxes>
   </Button>
 );
-const myStarredBox = ({height, width, type, title, attributes}) => (
+
+const myStarredBox = ({height, width, type, title, titleStyle, attributes}) => (
   <Button sx={{textTransform: 'none'}}>
     <Boxes height={height} width={width}>
-      <Typography variant={type} color="black">
+      <Typography variant={type} color="black" style={titleStyle}>
         {title}
+        </Typography>
         {attributes.map((attr) => (
           <Box>
-            {attr?.paper_id}
+            {attr?.title}
           </Box>
         ))}
-      </Typography>
     </Boxes>
   </Button>
 );
+const myGroupBox = ({ height, width, type, title, titleStyle, attributes }) => (
+  <Button sx={{textTransform: 'none'}}>
+    <Boxes height={height} width={width}>
+      <Typography variant={type} color="black" style={titleStyle}>
+        {title}
+      </Typography>
+        {attributes.map((attr) => (
+          <Box>
+            {attr?.group_name}
+          </Box>
+        ))}
+    </Boxes>
+  </Button>
+);
+
 const ProfileBox = ({height, width, type, title, attributes}) => (
   <Button sx={{textTransform: 'none'}}>
     <Boxes height={height} width={width}>
@@ -112,4 +128,4 @@ const Search = styled(Box)(({ theme }) => ({
     },
   }));
   
-  export { HeaderBox, ProfileBox, myFollowingBox, myStarredBox, Boxes, Search, SearchIconWrapper, StyledInputBase };  
+  export { HeaderBox, ProfileBox, myFollowingBox, myStarredBox, myGroupBox, Boxes, Search, SearchIconWrapper, StyledInputBase };  

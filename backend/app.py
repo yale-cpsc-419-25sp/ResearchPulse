@@ -11,7 +11,7 @@ import datetime
 from functools import wraps
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 app.secret_key = 'research_pulse_secret_key'
 app.config['JWT_SECRET_KEY'] = 'research_pulse_secret_key'  # Change this!
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(hours=1)
@@ -238,89 +238,81 @@ def following():
 
     return following
 
-@app.route('/starredpapers', methods=['POST'])
-def starred_papers():
-
-    data = request.get_json()
-    
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    starred = get_starred_papers(cursor, data['id'])
-
-    cursor.close()
-    conn.close()
-
-    return starred
+@app.route('/starred_papers', methods=['GET'])
+def get_starred_papers(cursor, person_id):
+    cursor.execute("""
+        SELECT p.title, p.paper_id, pe.first_name, pe.last_name 
+        FROM papers p
+        JOIN starred_papers sp ON p.paper_id = sp.paper_id
+        JOIN people pe ON sp.person_id = pe.person_id
+        WHERE sp.person_id = %s
+        ORDER BY p.publication_date DESC
+    """, (person_id,))
+    return cursor.fetchall()
 
 @app.route('/follow', methods=['POST'])
 def follow():
-    if 'person_id' not in session:
-        return redirect(url_for('index'))
+    data = request.get_json()
+    print(f"Received follow request: {data}")  # Log the received data
 
-    # Get the person_id from the form data
-    person_id = request.form.get('person_id')
+    follower_id = data.get('person_id')  # Current user (follower)
+    followee_id = data.get('user_id')    # User to follow
 
-    if not person_id:
-        return "Error: person_id not provided", 400
+    if not follower_id or not followee_id:
+        return jsonify({"error": "Missing person_id or user_id"}), 400
 
-    # 'person_id' is the person to be followed, and 'session['person_id']' is the current user (follower)
-    follower_id = session['person_id']
-    
-    # Insert into 'people_following' table
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute(insert_following(person_id, follower_id), (person_id, follower_id))
+    try:
+        cursor.execute(
+            "SELECT * FROM people_following WHERE person_id = %s AND follower_id = %s",
+            (followee_id, follower_id),
+        )
+        follow_exists = cursor.fetchone()
+
+        if follow_exists:
+            return jsonify({"error": "You are already following this user"}), 400
+
+        cursor.execute(
+            "INSERT INTO people_following (person_id, follower_id) VALUES (%s, %s)",
+            (followee_id, follower_id),
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"message": f"You are now following user {followee_id}"}), 200
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    
+@app.route('/unfollow', methods=['POST'])
+def unfollow():
+    data = request.get_json()
+    follower_id = data.get('person_id')
+    followee_id = data.get('user_id')
+
+    if not follower_id or not followee_id:
+        return jsonify({'error': 'Missing person_id or user_id'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Delete the follow relationship
+    cursor.execute(
+        "DELETE FROM people_following WHERE person_id = %s AND follower_id = %s",
+        (followee_id, follower_id)
+    )
     conn.commit()
 
     cursor.close()
     conn.close()
 
-    flash(f"You are now following the person with ID: {person_id}")
+    return jsonify({'message': f'You have unfollowed user {followee_id}.'})
 
-    return redirect(request.referrer)
-
-@app.route('/unfollow', methods=['POST'])
-def unfollow():
-    # Get the person_id from the form data
-    person_id = request.form.get('person_id')
-
-    if not person_id:
-        return "Error: person_id not provided", 400
-
-    # 'user_id' is the ID of the currently logged-in user (fetch it from session or wherever)
-    user_id = session.get('person_id') 
-
-    if not user_id:
-        return "Error: user not logged in", 400  # Or handle as necessary
-
-    # Query to find the follow relationship in the database
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    # Check if the follow relationship exists
-    cursor.execute("""
-        SELECT * FROM people_following WHERE person_id = %s AND follower_id = %s
-    """, (person_id, user_id))
-    follow_record = cursor.fetchone()
-
-    # If the follow record exists, remove it
-    if follow_record:
-        cursor.execute("""
-            DELETE FROM people_following WHERE person_id = %s AND follower_id = %s
-        """, (person_id, user_id))
-        conn.commit()
-        message = f'You have unfollowed {person_id}'
-    else:
-        message = f'You are not following this user with ID: {person_id}'
-
-    cursor.close()
-    conn.close()
-
-    flash(message)
-    
-    return redirect(request.referrer)
 
 @app.route('/join_group', methods=['POST'])
 def join_group():
@@ -394,51 +386,43 @@ def leave_group():
 
 @app.route('/star_paper', methods=['POST'])
 def star_paper():
-    # Get the person_id and paper_id from the form data or request
-    person_id = session.get('person_id')
-    paper_id = request.form.get('paper_id')
+    data = request.get_json()
+    person_id = data.get('person_id')
+    paper_id = data.get('paper_id')
 
     if not person_id or not paper_id:
-        return "Error: person_id or paper_id not provided", 400
+        return jsonify({"error": "Error: person_id or paper_id not provided"}), 400
 
-    # Assuming 'user_id' is the ID of the currently logged-in user
-    user_id = session.get('person_id')  # Or wherever you store the current user's ID
-
-    if not user_id:
-        return "Error: user not logged in", 400
-
-    # Start a session and check if the user and paper exist
+    # Assuming user_id is from session or input
     session_db = Session()
-    user = session_db.query(People).filter_by(person_id=user_id).first()
+    user = session_db.query(People).filter_by(person_id=person_id).first()
     paper = session_db.query(Papers).filter_by(paper_id=paper_id).first()
 
     if not user or not paper:
-        session_db.close()  # Always close session when done
-        return "Error: User or Paper not found", 404
+        session_db.close()
+        return jsonify({"error": "Error: User or Paper not found"}), 404
 
-    # Check if the paper is already starred by the user
-    existing_starred = session_db.query(StarredPapers).filter_by(person_id=user_id, paper_id=paper_id).first()
-
+    existing_starred = session_db.query(StarredPapers).filter_by(person_id=person_id, paper_id=paper_id).first()
     if existing_starred:
-        session_db.close()  # Close the session
-        return "This paper is already starred by the user", 400
+        session_db.close()
+        return jsonify({"error": "This paper is already starred by the user"}), 400
 
-    # Add the paper to the starred papers list by creating a new StarredPapers entry
-    starred_paper = StarredPapers(person_id=user_id, paper_id=paper_id)
+    starred_paper = StarredPapers(person_id=person_id, paper_id=paper_id)
     session_db.add(starred_paper)
     session_db.commit()
+    session_db.close()
 
-    session_db.close()  # Close session after commit
-    return redirect(request.referrer)
+    return jsonify({"message": "Paper starred successfully!"}), 200
 
 @app.route('/unstar_paper', methods=['POST'])
 def unstar_paper():
-    # Get the person_id and paper_id from the form data or request
-    person_id = session.get('person_id')
-    paper_id = request.form.get('paper_id')
+    # Get the person_id and paper_id from the request JSON
+    data = request.get_json()
+    person_id = data.get('person_id')
+    paper_id = data.get('paper_id')
 
     if not person_id or not paper_id:
-        return "Error: person_id or paper_id not provided", 400
+        return jsonify({"error": "Error: person_id or paper_id not provided"}), 400
 
     # Start a session and check if the user and paper exist
     session_db = Session()
@@ -446,18 +430,23 @@ def unstar_paper():
     paper = session_db.query(Papers).filter_by(paper_id=paper_id).first()
 
     if not user or not paper:
-        return "Error: User or Paper not found", 404
+        session_db.close()
+        return jsonify({"error": "Error: User or Paper not found"}), 404
 
     # Check if the paper is starred by the user
     starred_paper = session_db.query(StarredPapers).filter_by(person_id=person_id, paper_id=paper_id).first()
 
     if not starred_paper:
-        return "This paper is not starred by the user", 400
+        session_db.close()
+        return jsonify({"error": "This paper is not starred by the user"}), 400
 
     # Remove the paper from the starred papers list
     session_db.delete(starred_paper)
     session_db.commit()
-    return redirect(request.referrer)
+    session_db.close()
+
+    return jsonify({"message": "Paper unstarred successfully!"}), 200
+
 
 @app.route('/user/<person_id>', methods=['GET'])
 def get_user(person_id):
@@ -472,7 +461,7 @@ def get_group_route(group_id):
     group_data = get_group_data(group_id)
     
     if group_data:
-        return render_template('group_id.html', group=group_data)
+        return jsonify(group_data) 
     else:
         return jsonify({"error": "Group not found"}), 404
     
@@ -483,32 +472,32 @@ def get_paper_route(paper_id):
     db_session.close()  # Properly close session when done
 
     if paper_data:
-        return render_template(
-            'paper_id.html',
-            paper=paper_data["paper"],
-            authors=paper_data["authors"],
-            comments=paper_data["comments"],
-            starred_by=paper_data["starred_by"]
-        )
+        return jsonify({
+            "paper": paper_data["paper"],
+            "authors": paper_data["authors"],
+            "comments": paper_data["comments"],
+            "starred_by": paper_data["starred_by"]
+        })
     else:
         return jsonify({"error": "Paper not found"}), 404
 
+# Route to add a comment
 @app.route('/paper/<paper_id>/comment', methods=['POST'])
 def add_comment(paper_id):
     try:
         # Extract form data
-        person_id = session.get('person_id')
-        comment_text = request.form['comment_text']
-        date = request.form.get('date')
+        data = request.get_json()
+        person_id = data.get('person_id')
+        comment_text = data.get('comment_text')
+        date = data.get('date')
 
-        # Insert comment into the database
+        # Insert comment into the database (assumes insert_comment is implemented)
         insert_comment(paper_id, person_id, comment_text, date)
 
-        # Redirect back to the paper detail page using the correct endpoint
-        return redirect(url_for('get_paper_route', paper_id=paper_id))
+        return jsonify({"success": True}), 200
 
     except Exception as e:
-        return f"Error: {str(e)}"
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/logout', methods=['POST'])
 def logout():
