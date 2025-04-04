@@ -1,6 +1,6 @@
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-from database_defs import Papers, People, Authors, DiscussionGroups, GroupMembers, PeopleFollowing, StarredPapers, Comments
+from sqlalchemy import create_engine, func
+from database_defs import * #Papers, People, Authors, Institutions, DiscussionGroups, GroupMembers, PeopleFollowing, StarredPapers, Comments
 from datetime import datetime
 from mysql.connector import connect, Error
 
@@ -370,3 +370,74 @@ def insert_comment(paper_id, person_id, comment_text, date=None):
     finally:
         session.close()
 
+def get_recent_papers(session, person_id, limit=10):
+    papers = (
+        session.query(Papers)
+        .order_by(Papers.publication_date.desc())
+        .limit(limit)
+        .all()
+    )
+
+    paper_ids = [p.paper_id for p in papers]
+
+    starred_ids = set(
+        r[0] for r in session.query(StarredPapers.paper_id)
+        .filter(StarredPapers.person_id == person_id)
+        .filter(StarredPapers.paper_id.in_(paper_ids))
+        .all()
+    )
+
+    result = []
+    for paper in papers:
+        # get author names
+        author_links = session.query(Authors).filter_by(paper_id=paper.paper_id).all()
+        author_names = []
+
+        for p in author_links[:3]:
+            person = session.query(People).filter_by(person_id=p.author_id).first()
+            if person:
+                full_name = f"{person.first_name} {person.last_name}"
+                author_names.append({"name": full_name})
+
+        # limit to 3 authors shown, after that, show et.al
+        if len(author_links) > 3:
+            author_names.append({"name": "et al."})
+
+        result.append({
+            "paperId": paper.paper_id,
+            "title": paper.title,
+            "year": str(paper.publication_date),
+            "venue": paper.journal_id,
+            "authors": author_names,
+            "starred": paper.paper_id in starred_ids,
+        })
+
+    return result
+
+
+def get_random_authors(session, limit=5):
+    papers = session.query(Papers).order_by(func.rand()).limit(limit).all()
+
+    author_ids = set()
+    authors_list = []
+
+    for paper in papers:
+        authors = (
+            session.query(People, Institutions.institution_name)
+            .join(Authors, People.person_id == Authors.author_id)
+            .outerjoin(Institutions, People.institution_id == Institutions.institution_id)
+            .filter(Authors.paper_id == paper.paper_id)
+            .all()
+        )
+        for author, institution_name in authors:
+            if author.person_id not in author_ids:
+                author_ids.add(author.person_id)
+                authors_list.append({
+                    "person_id": author.person_id,
+                    "first_name": author.first_name,
+                    "last_name": author.last_name,
+                    "primary_department": author.primary_department or "No department",
+                    "institution_id": institution_name or "No institution"
+                })
+
+    return authors_list

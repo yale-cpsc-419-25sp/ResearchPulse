@@ -8,6 +8,9 @@ import Profile from './pages/profile';
 import Starred from './pages/starred';
 import PaperDetail from './pages/paper';
 import Following from './pages/following';
+import RecentPapers from './pages/recentpapers';
+import RecentAuthors from './pages/recentauthors';
+
 
 function App() {
   return (
@@ -21,8 +24,8 @@ function App() {
         <Route path="/followedpapers" element={<div>Followed Papers</div>} />
         <Route path="/following" element={<Following />} />
         <Route path="/starred" element={<Starred />} />
-        <Route path="/recentpapers" element={<div>Recent Papers</div>} />
-        <Route path="/recentauthors" element={<div>Recent Authors</div>} />
+        <Route path="/recentpapers" element={<RecentPapers />} />
+        <Route path="/recentauthors" element={<RecentAuthors />} />
         <Route path="/inbox" element={<div>Inbox</div>} />
         <Route path="/joingroup" element={<div>Join Group</div>} />
         <Route path="/leavegroup" element={<div>Leave Group</div>} />

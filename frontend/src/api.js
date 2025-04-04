@@ -230,3 +230,55 @@ export const deleteComment = async (paperId, commentId) => {
 
   return await response.json(); // Return updated paper data after deleting the comment
 };
+
+// Discovering recent papers 
+export const fetchDiscoverRecentPapers = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:5000/api/recent_papers', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      credentials: 'include',
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      console.error('Backend error:', data.error || 'Unknown error');
+      return [];
+    }
+
+    return data.papers;
+  } catch (error) {
+    console.error('Fetch failed:', error);
+    return [];
+  }
+};
+
+
+// Getting authors to appear in our following page
+export const fetchRandomAuthors = async () => {
+  try {
+    const response = await fetch('http://localhost:5000/api/new_authors', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      console.error('Error fetching random authors:', data.error || 'Unknown error');
+      return [];
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Fetch failed:', error);
+    return [];
+  }
+};

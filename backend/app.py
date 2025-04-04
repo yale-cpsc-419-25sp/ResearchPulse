@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from flask_cors import CORS
 import mysql.connector
-from queries import get_person_data, get_group_data, insert_following, insert_group_member, get_discussion_groups, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment
-from database_defs import Papers, People, StarredPapers
+from queries import get_person_data, get_group_data, insert_following, insert_group_member, get_discussion_groups, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment, get_recent_papers, is_paper_starred, get_random_authors
+from database_defs import Papers, Authors, People, StarredPapers
+from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 from database_defs import engine
 from flask_session import Session
@@ -498,6 +499,35 @@ def add_comment(paper_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# Route to discover recent papers
+@app.route('/api/recent_papers', methods=['GET'])
+@token_required
+def api_recent_papers(current_user):
+    try:
+        session = Session()
+        papers = get_recent_papers(session, current_user)
+        for p in papers:
+            p["starred"] = is_paper_starred(current_user, p["paperId"])
+
+        return jsonify({"success": True, "papers": papers})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/api/new_authors', methods=['GET'])
+def api_random_authors():
+    session = Session()
+    try:
+        authors_list = get_random_authors(session, limit=10)
+        return jsonify({"success": True, "authors": authors_list})
+    except Exception as e:
+        print(f"Error fetching random authors: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
 
 @app.route('/logout', methods=['POST'])
 def logout():

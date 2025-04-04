@@ -12,7 +12,7 @@ import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import GroupRemoveIcon from '@mui/icons-material/GroupRemove';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import { Link, useNavigate } from 'react-router-dom';
+import {useNavigate } from 'react-router-dom';
 
 // Drawer size constant
 const drawerSize = 240;
@@ -31,8 +31,8 @@ export const drawerItems = [
   {
     header: 'Discover',
     items: [
-      { name: 'Recent Papers', icon: <FeedIcon />, page: '/recentpapers' },
-      { name: 'Recent Authors', icon: <AssignmentIndIcon />, page: '/recentauthors' },
+      { name: 'New Papers', icon: <FeedIcon />, page: '/recentpapers' },
+      { name: 'New Authors', icon: <AssignmentIndIcon />, page: '/recentauthors' },
     ]
   },
   {
