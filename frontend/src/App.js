@@ -7,6 +7,7 @@ import Dashboard from './pages/dashboard';
 import Profile from './pages/profile';
 import Starred from './pages/starred';
 import PaperDetail from './pages/paper';
+import FollowingPapers from './pages/followingpapers';
 import Following from './pages/following';
 import RecentPapers from './pages/recentpapers';
 import RecentAuthors from './pages/recentauthors';
@@ -21,7 +22,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/followedpapers" element={<div>Followed Papers</div>} />
+        <Route path="/followedpapers" element={<FollowingPapers />} />
         <Route path="/following" element={<Following />} />
         <Route path="/starred" element={<Starred />} />
         <Route path="/recentpapers" element={<RecentPapers />} />

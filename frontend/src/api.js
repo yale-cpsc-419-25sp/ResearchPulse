@@ -40,6 +40,15 @@ export const fetchUserData = async () => {
     groups: data.person_dict.groups || [],
   };
 }
+export const get_following_papers =  (id) => {
+  return fetch('http://localhost:5000/followedpapers', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ id }),
+  }).then(res => res.json());
+}
 export const get_my_following =  (id) => {
   return fetch('http://localhost:5000/following', {
     method: 'POST',

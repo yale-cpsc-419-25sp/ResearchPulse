@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from flask_cors import CORS
 import mysql.connector
-from queries import get_person_data, get_group_data, insert_following, insert_group_member, get_discussion_groups, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment, get_recent_papers, is_paper_starred, get_random_authors
+from queries import get_person_data, get_group_data, insert_following, insert_group_member, get_discussion_groups, get_followed_papers, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment, get_recent_papers, is_paper_starred, get_random_authors
 from database_defs import Papers, Authors, People, StarredPapers
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
@@ -223,6 +223,24 @@ def index():
             return render_template('login.html', error='Invalid Person ID')
             
     return render_template('login.html')
+
+@app.route('/followedpapers', methods=['POST'])
+def followedPapers():
+    data = request.get_json()
+    person_id = data.get('id')
+
+    if not person_id:
+        print("Missing person_id in request data")
+        return jsonify([])
+
+    try:
+        db_session = Session()  # Single session created here
+        papers = get_followed_papers(db_session, person_id)
+        return jsonify(papers)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        db_session.close()
 
 @app.route('/following', methods=['POST'])
 def following():

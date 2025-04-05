@@ -31,6 +31,87 @@ def get_person_by_id(cursor, person_id):
     cursor.execute("SELECT * FROM people WHERE person_id = %s", (person_id,))
     return cursor.fetchone()
 
+def get_followed_papers(session, person_id,limit=25):
+    followed_ids = (
+        session.query(PeopleFollowing.person_id)
+        .filter(PeopleFollowing.follower_id == person_id)
+        .all()
+    )
+
+    followed_ids = [f[0] for f in followed_ids]
+
+    if not followed_ids:
+        return []
+
+    # (2) Get the most recent papers authored by followed people
+    papers = (
+        session.query(Papers)
+        .join(Authors, Authors.paper_id == Papers.paper_id)
+        .filter(Authors.author_id.in_(followed_ids))
+        .order_by(Papers.publication_date.desc())
+        .limit(limit)
+        .all()
+    )
+
+    if not papers:
+        return []
+
+    paper_ids = [p.paper_id for p in papers]
+
+    # (3) Get which of these papers are starred by the user
+    starred_ids = set(
+        r[0]
+        for r in session.query(StarredPapers.paper_id)
+        .filter(StarredPapers.person_id == person_id)
+        .filter(StarredPapers.paper_id.in_(paper_ids))
+        .all()
+    )
+
+    # (4) Build full paper data
+    result = []
+    for paper in papers:
+        author_links = session.query(Authors).filter_by(paper_id=paper.paper_id).all()
+        author_names = []
+        followed_authors = []
+
+        for author_link in author_links[:3]:
+            person = session.query(People).filter_by(person_id=author_link.author_id).first()
+            if person:
+                full_name = f"{person.first_name} {person.last_name}"
+                # Check if the author is being followed
+                is_followed = author_link.author_id in followed_ids
+                author_names.append({
+                    "name": full_name,
+                    "isFollowed": is_followed  # Add a flag for frontend styling
+                })
+                if is_followed:
+                    followed_authors.append(full_name)
+
+        # Only list 3 authors max
+        if len(author_links) > 3:
+            additional_authors = []
+            for author_link in author_links[3:]:
+                person = session.query(People).filter_by(person_id=author_link.author_id).first()
+                if person:
+                    full_name = f"{person.first_name} {person.last_name}"
+                    # Only bold if the user is following that author
+                    if full_name not in followed_authors and author_link.author_id in followed_ids:
+                        additional_authors.append({"name": full_name, "isFollowed": True})
+            if additional_authors:
+                author_names = author_names + additional_authors
+            author_names.append({"name": "et al.", "isFollowed": False})
+
+        result.append({
+            "paperId": paper.paper_id,
+            "title": paper.title,
+            "year": str(paper.publication_date),
+            "venue": paper.journal_id,
+            "authors": author_names,
+            "starred": paper.paper_id in starred_ids,
+        })
+
+    return result
+
 def get_following(cursor, person_id):
     cursor.execute("""
         SELECT p.* FROM people p
