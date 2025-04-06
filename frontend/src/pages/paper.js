@@ -66,6 +66,9 @@ const PaperDetail = () => {
       }
     }
   };
+  console.log('Paper object:', paper);
+  console.log('Comments object:', comments);
+  // console.log('Paper authors: ', paper.authors);
 
   return (
     <Box sx={{ display: 'flex', width: '100%' }}>
@@ -73,16 +76,17 @@ const PaperDetail = () => {
       <PageDrawer drawerItems={drawerItems} myName={myName} />
       <Box component="main" sx={{ p: 3, width: 'calc(100% - 240px)' }}>
         <Toolbar />
-        <Typography variant="h3">
-          {paper ? paper.title : 'Loading...'}
+        <Typography variant="h4">
+          {paper ? paper.paper.title : 'Loading...'}
         </Typography>
         <Divider />
         
         {/* Paper Details */}
         {paper && (
           <div>
+  
             <Typography variant="h5" sx={{ mt: 2 }}>
-              Authors: {paper.authors.join(', ')}
+            Authors: {paper.authors.map(author => `${author.first_name} ${author.last_name}`).join(', ')}
             </Typography>
             <Divider sx={{ mt: 2 }} />
             
@@ -94,8 +98,8 @@ const PaperDetail = () => {
               ) : (
                 comments.map((comment) => (
                   <li key={comment.id}>
-                    <strong>{comment.person_name}</strong>: {comment.text}
-                    {comment.person_id === personId && (
+                    <strong>{comment.first_name} {comment.last_name} </strong>: {comment.comment_text}
+                    {/* {comment.person_id === personId && (
                       <Button
                         onClick={() => handleDeleteComment(comment.id)}
                         variant="outlined"
@@ -104,7 +108,7 @@ const PaperDetail = () => {
                       >
                         Delete
                       </Button>
-                    )}
+                    )} */}
                   </li>
                 ))
               )}

@@ -32,7 +32,7 @@ function App() {
         <Route path="/leavegroup" element={<div>Leave Group</div>} />
         <Route path="*" element={<div>404 Not Found</div>} />
         <Route path="/paper/:paperId" element={<PaperDetail />} />
-
+      
 
       </Routes>
     </BrowserRouter>
