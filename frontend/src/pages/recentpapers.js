@@ -4,13 +4,15 @@ import Grid from '@mui/material/Grid2';
 import { CustomAppBar } from './components/pagebar';
 import { PageDrawer, drawerItems } from './components/pagedrawer';
 import { fetchUserData, fetchDiscoverRecentPapers, starPaper, unstarPaper } from '../api';
+import { useNavigate } from 'react-router-dom';
 
 function RecentPapers() {
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [myName, setMyName] = useState('');
   const [message, setMessage] = useState('');
-
+  const navigate = useNavigate();
+  
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -86,9 +88,11 @@ function RecentPapers() {
             {papers.map((paper) => (
               <Grid item xs={12} sm={4} md={4} key={paper.paperId}>
                 <Paper elevation={3} sx={{ p: 2, borderRadius: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                  <Typography variant="h6" gutterBottom>
-                    {paper.title}
-                  </Typography>
+                <Button
+                  onClick={() => navigate(`/paper/${paper.paperId}`)}
+                >
+                  {paper.title}
+                </Button>
                   <Typography variant="body2" color="text.secondary">
                     <strong>Authors:</strong> {paper.authors?.map((a) => a.name).join(', ') || 'Unknown'}
                   </Typography>
