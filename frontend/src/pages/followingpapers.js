@@ -3,6 +3,8 @@ import { fetchUserData, get_following_papers } from '../api';
 import { Box, Toolbar, Typography, Divider, Grid, Button, Paper, CircularProgress } from '@mui/material';
 import { CustomAppBar } from './components/pagebar';
 import { PageDrawer, drawerItems } from './components/pagedrawer';
+import { redirect } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const FollowingPapers = () => {
   const [userId, setUserId] = useState('');
@@ -12,7 +14,8 @@ const FollowingPapers = () => {
   const [myName, setMyName] = useState(null);
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const navigate = useNavigate();
+  
   // Toggle star/unstar
   const handleStarToggle = (paper) => {
     setPapers(prevPapers =>
@@ -77,9 +80,11 @@ const FollowingPapers = () => {
             {papers.map((paper) => (
               <Grid item xs={12} sm={4} md={4} key={paper.paperId}>
                 <Paper elevation={3} sx={{ p: 2, borderRadius: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                  <Typography variant="h6" gutterBottom>
-                    {paper.title}
-                  </Typography>
+                <Button
+                  onClick={() => navigate(`/paper/${paper.paperId}`)}
+                >
+                  {paper.title}
+                </Button>
                   <Typography variant="body2" color="text.secondary">
                   <strong>Authors: </strong> 
                     {paper.authors?.map((a, index) => (
