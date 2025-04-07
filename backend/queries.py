@@ -450,8 +450,8 @@ def insert_comment(paper_id, person_id, comment_text, date=None):
 
     finally:
         session.close()
-
-def get_recent_papers(session, person_id, limit=10):
+        
+def get_recent_papers(session, person_id, limit=100):
     papers = (
         session.query(Papers)
         .order_by(Papers.publication_date.desc())
