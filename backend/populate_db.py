@@ -40,7 +40,17 @@ def get_discussion_group():
             "group_id": "Group2",
             "group_name": "AI in Medicine",
             "description": "A group for researchers exploring AI applications in medicine."
-        }
+        },
+        {
+            "group_id": "Group3",
+            "group_name": "Machine Learning",
+            "description": "A group for researchers exploring AI applications in medicine."
+        },
+        {
+            "group_id": "Group4",
+            "group_name": "Medicine",
+            "description": "A group for researchers exploring AI applications in medicine."
+        },
     ]
     
     return groups
@@ -187,5 +197,5 @@ if __name__ == "__main__":
     papers = get_cancer_research_papers()
     print(papers)
 
-    populate_database()
-    # populate_discussion_groups()
+    # populate_database()
+    populate_discussion_groups()

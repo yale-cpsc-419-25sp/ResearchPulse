@@ -11,6 +11,9 @@ import FollowingPapers from './pages/followingpapers';
 import Following from './pages/following';
 import RecentPapers from './pages/recentpapers';
 import RecentAuthors from './pages/recentauthors';
+import JoinGroup from './pages/joingroup';
+import Updates from './pages/updates';
+import GroupPage from "./pages/groups";
 
 
 function App() {
@@ -27,9 +30,9 @@ function App() {
         <Route path="/starred" element={<Starred />} />
         <Route path="/recentpapers" element={<RecentPapers />} />
         <Route path="/recentauthors" element={<RecentAuthors />} />
-        <Route path="/inbox" element={<div>Inbox</div>} />
-        <Route path="/joingroup" element={<div>Join Group</div>} />
-        <Route path="/leavegroup" element={<div>Leave Group</div>} />
+        <Route path="/joingroup" element={<JoinGroup/>} />
+        <Route path="/updates" element={<Updates/>} />
+        <Route path="/group/:groupId" element={<GroupPage/>} />
         <Route path="*" element={<div>404 Not Found</div>} />
         <Route path="/paper/:paperId" element={<PaperDetail />} />
       

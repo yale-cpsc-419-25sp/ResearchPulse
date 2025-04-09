@@ -291,3 +291,28 @@ export const fetchRandomAuthors = async () => {
     return [];
   }
 };
+
+// Join a new group
+export const joinGroup = async (group_id, person_id) => {
+  try {
+    const response = await fetch('http://localhost:5000/join_group', {
+    method: 'POST',
+    headers: {
+    'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ group_id, person_id }),
+    });
+    
+    if (!response.ok) {
+    const errorText = await response.text();  // Get the response as text
+    console.error('joinGroup failed:', response.status, response.statusText, errorText);
+    throw new Error(`HTTP error! Status: ${response.status}, ${errorText}`);
+    }
+    
+    const data = await response.json();
+    return data;
+    } catch (error) {
+    console.error('joinGroup fetch error:', error);
+    throw error;  // Re-throw the error so the component knows it failed
+    }
+};

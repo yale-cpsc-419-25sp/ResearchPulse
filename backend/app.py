@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from flask_cors import CORS
 import mysql.connector
 from queries import get_person_data, get_group_data, insert_following, insert_group_member, get_discussion_groups, get_followed_papers, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment, get_recent_papers, is_paper_starred, get_random_authors
-from database_defs import Papers, Authors, People, StarredPapers
+from database_defs import Papers, Authors, DiscussionGroups, GroupMembers, People, StarredPapers
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 from database_defs import engine
@@ -332,34 +332,50 @@ def unfollow():
 
     return jsonify({'message': f'You have unfollowed user {followee_id}.'})
 
+@app.route('/group/<group_id>/members', methods=['GET'])
+def get_group_members(group_id):
+    members = (
+            session.query(People)
+            .join(GroupMembers, People.person_id == GroupMembers.person_id)
+            .filter(GroupMembers.group_id == group_id)
+            .all()
+        )
+    
+    return jsonify({
+        'success': True,
+        'members': [{
+            'person_id': m.person_id,
+            'name': m.name,
+            "first_name": m.first_name,
+            "last_name": m.last_name,
+        } for m in members]
+    })
+
 
 @app.route('/join_group', methods=['POST'])
 def join_group():
-    if 'person_id' not in session:
-        return redirect(url_for('index'))
+    try:
+        data = request.get_json()
+        group_id = data.get('group_id')
+        person_id = data.get('person_id')
 
-    # Get the group_id from the form data
-    group_id = request.form.get('group_id')
+        if not group_id:
+            return "Error: group_id not provided", 400
 
-    if not group_id:
-        return "Error: group_id not provided", 400
+        db = Session()
+        group = db.query(DiscussionGroups).get(group_id)
 
-    # 'group_id' is the group to be joined, and 'session['person_id']' is the current user
-    person_id = session['person_id']
+        if not group:
+            return jsonify({'success': False, 'message': 'Group not found'}), 404
+        
+        member = GroupMembers(group_id=group_id, person_id=person_id)
+        db.add(member)
+        db.commit()
 
-    # Insert into 'group_members' table
-    conn = get_db_connection()
-    cursor = conn.cursor()
+        return jsonify({'success': True, 'message': 'Successfully joined group'})
 
-    cursor.execute(insert_group_member(group_id, person_id), (group_id, person_id))
-    conn.commit()
-
-    cursor.close()
-    conn.close()
-
-    flash(f"You have successfully joined the group with ID: {group_id}")
-
-    return redirect(request.referrer)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/leave_group', methods=['POST'])
 def leave_group():
