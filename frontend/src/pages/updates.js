@@ -1,24 +1,16 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import {Box, Toolbar, Divider, Typography} from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import { Box, Toolbar, CircularProgress, Divider, Typography, Paper, Grid } from '@mui/material';
 import { CustomAppBar } from './components/pagebar';
 import { PageDrawer, drawerItems } from './components/pagedrawer';
 import { fetchUserData } from '../api';
-
-// Main Dashboard Page that displays the user's information
+import { Link } from 'react-router-dom';
 
 function Updates() {
-
   const [myID, setMyID] = useState(null);
   const [myName, setMyName] = useState(null);
-  const [myData, setMyData] = useState({
-    first_name: '',
-    last_name: '',
-    authored_papers: [],
-    groups: [],
-    starred_papers: []
-  });
+  const [groupStarredPapers, setGroupStarredPapers] = useState([]); // State to hold group's starred papers
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
     const loadData = async () => {
@@ -26,86 +18,80 @@ function Updates() {
         const data = await fetchUserData();
         setMyID(data.person_id);
         setMyName(data.name);
-        setMyData(data.person_dict || {
-          first_name: '',
-          last_name: '',
 
-          authored_papers: [],
-          groups: [],
-          starred_papers: []
-        });
+        // Fetch group members' starred papers
+        if (data.groups && data.groups.length > 0) {
+          const papers = await fetchGroupStarredPapers(data.groups);
+          setGroupStarredPapers(papers);
+        }
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error('Error fetching data:', error);
         window.location.href = '/';
+      } finally {
+        setLoading(false);
       }
     };
 
     loadData();
   }, []);
-return (
+
+  // Helper function to fetch starred papers for each group member
+  const fetchGroupStarredPapers = async (groups) => {
+    let allStarredPapers = [];
+    for (const group of groups) {
+      for (const member of group.members) {
+        try {
+          const memberData = await fetchUserData(member.person_id);
+          const starredPapers = memberData.starredPapers;
+          allStarredPapers = [...allStarredPapers, ...starredPapers.map(paper => ({
+            ...paper,
+            groupName: group.group_name,
+            memberName: memberData.name
+          }))];
+        } catch (error) {
+          console.error(`Error fetching starred papers for member ${member.person_id}:`, error);
+        }
+      }
+    }
+    return allStarredPapers;
+  };
+
+  return (
     <Box sx={{ display: 'flex' }}>
-        <CustomAppBar/>
-        <PageDrawer drawerItems={drawerItems} myName={myName}/>
-        <Box component="main" sx={{ p: 3 }}>
-            <Toolbar />
-            <Divider/>
-            <br/>
-            <Typography variant="h4">
-                Updates
-            </Typography>
-            <br/>
-            <Divider/>
-            <br/>
-        </Box>
+      <CustomAppBar />
+      <PageDrawer drawerItems={drawerItems} myName={myName} />
+      <Box component="main" sx={{ p: 3, width: 'calc(100% - 240px)' }}>
+        <Toolbar />
+        <Divider />
+        <br />
+        <Typography variant="h4">
+          Updates
+        </Typography>
+        <br />
+        <Divider />
+        <br />
+        <Typography variant="h6">
+          See what your group members are starring!
+        </Typography>
+        <br />
+            {groupStarredPapers.map((paper, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <Paper elevation={3} sx={{ p: 2 }}>
+                  <Typography variant="subtitle1">
+                    <Link to={`/paper/${paper.paperId}`} style={{ textDecoration: 'none' }}>
+                      {paper.title}
+                    </Link>
+                  </Typography>
+                  <Typography variant="body2">
+                    Starred by: {paper.memberName} from {paper.groupName}
+                  </Typography>
+                </Paper>
+              </Grid>
+            ))}
+          <Typography>No recent starred papers from your group members.</Typography>
+      </Box>
     </Box>
-);
-
-//     return (
-//     <Box sx={{ display: 'flex' }}>
-//       <CustomAppBar/>
-//       <PageDrawer drawerItems={drawerItems} myName={myName}/>
-//       <Box component="main" sx={{ p: 3 }}>
-//         <Toolbar />
-//         <Divider/>
-//         <br/>
-//         <Typography variant="h4">
-//           My Profile
-//         </Typography>
-//         <br/>
-//         <Divider/>
-//           <Grid container spacing={1}>
-//             <br/>
-//             <Grid item style={{width: "100%"}}>
-//               User ID: {myID}
-//               <Box sx={{ mb: 4 }}>
-//                 <Typography>Name: {myData.first_name} {myData.last_name}</Typography>
-//                 <Typography>Institution ID: {myData.institution_id}</Typography>
-//                 <Typography>Department: {myData.primary_department}</Typography>
-//               </Box>
-
-//               <Box sx={{ mb: 4 }}>
-//                 <Typography >Starred Papers ({myData.starred_papers?.length || 0})</Typography>
-//                 {myData.starred_papers?.map(paper => (
-//                   <Box key={paper.paper_id} sx={{ mb: 1 }}>
-//                     <Typography >{paper.title}</Typography>
-//                   </Box>
-//                 ))}
-//               </Box>
-            
-//               <Box sx={{ mb: 4 }}>
-//                 <Typography >Groups ({myData.groups?.length || 0})</Typography>
-//                 {myData.groups?.map(group => (
-//                   <Box key={group.group_id} sx={{ mb: 1 }}>
-//                     <Typography>{group.group_name}</Typography>
-//                   </Box>
-//                 ))}
-//               </Box>
-
-//             </Grid>
-//           </Grid>
-//       </Box>
-//     </Box>
-//   );
+  );
 }
 
 export default Updates;

@@ -34,22 +34,22 @@ def get_discussion_group():
         {
             "group_id": "Group1",
             "group_name": "Cancer Research Group",
-            "description": "A group for researchers working on cancer-related topics."
+            "description": "A group for researchers working on cancer-related topics.",
         },
         {
             "group_id": "Group2",
             "group_name": "AI in Medicine",
-            "description": "A group for researchers exploring AI applications in medicine."
+            "description": "A group for researchers exploring AI applications in medicine.",
         },
         {
             "group_id": "Group3",
-            "group_name": "Machine Learning",
-            "description": "A group for researchers exploring AI applications in medicine."
+            "group_name": "Genomics and Bioinformatics",
+            "description": "A community focused on large-scale genomics, sequencing technologies, and data pipelines.",
         },
         {
             "group_id": "Group4",
-            "group_name": "Medicine",
-            "description": "A group for researchers exploring AI applications in medicine."
+            "group_name": "Public Health Policy",
+            "description": "Talk data-driven policies, global health challenges, and epidemiology.",
         },
     ]
     
@@ -75,12 +75,18 @@ def populate_discussion_groups():
             new_group = DiscussionGroups(
                 group_id=group["group_id"],
                 group_name=group["group_name"],
-                description=group["description"]
+                description=group["description"],
             )
             print(group["group_id"])
             print(group["group_name"])
             session.add(new_group)
-            session.commit()
+        else:
+        # Update group info if it has changed
+            if existing_group.group_name != group["group_name"]:
+                existing_group.group_name = group["group_name"]
+            if existing_group.description != group["description"]:
+                existing_group.description = group["description"]
+    session.commit()
 
 
     session.close()

@@ -379,45 +379,28 @@ def join_group():
 
 @app.route('/leave_group', methods=['POST'])
 def leave_group():
-    """Function to allow users to leave a group"""
-    # Get the group_id from the form data
-    group_id = request.form.get('group_id')
+    try:
+        data = request.get_json()
+        group_id = data.get('group_id')
+        person_id = data.get('person_id')
 
-    if not group_id:
-        return "Error: group_id not provided", 400
+        if not group_id:
+            return "Error: group_id not provided", 400
 
-    # 'user_id' is the ID of the currently logged-in user (fetch it from session or wherever)
-    user_id = session.get('person_id')
+        db = Session()
+        group = db.query(DiscussionGroups).get(group_id)
 
-    if not user_id:
-        return "Error: user not logged in", 400  # Or handle as necessary
+        if not group:
+            return jsonify({'success': False, 'message': 'Group not found'}), 404
+        
+        member = GroupMembers(group_id=group_id, person_id=person_id)
+        db.delete(member)
+        db.commit()
 
-    # Query to find the group membership in the database
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+        return jsonify({'success': True, 'message': 'Successfully left group'})
 
-    # Check if the user is a member of the group
-    cursor.execute("""
-        SELECT * FROM group_members WHERE group_id = %s AND person_id = %s
-    """, (group_id, user_id))
-    group_member_record = cursor.fetchone()
-
-    # If the user is a member, remove them from the group
-    if group_member_record:
-        cursor.execute("""
-            DELETE FROM group_members WHERE group_id = %s AND person_id = %s
-        """, (group_id, user_id))
-        conn.commit()
-        message = f'You have left the group with ID: {group_id}'
-    else:
-        message = f'You are not a member of the group with ID: {group_id}'
-
-    cursor.close()
-    conn.close()
-
-    flash(message)
-    
-    return redirect(request.referrer)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/star_paper', methods=['POST'])
 def star_paper():

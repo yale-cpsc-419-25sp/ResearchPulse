@@ -1,11 +1,10 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import {Box, Toolbar, CircularProgress, Divider, Typography, Paper, Grid2} from '@mui/material';
+import {Box, Toolbar, Divider, Typography, Paper, Grid2} from '@mui/material';
 import {TextField, Button } from '@mui/material';
-import Grid from '@mui/material/Grid2';
 import { CustomAppBar } from './components/pagebar';
 import { PageDrawer, drawerItems } from './components/pagedrawer';
-import { fetchGroupData, fetchUserData, joinGroup } from '../api';
+import { fetchUserData, joinGroup, leaveMyGroup} from '../api';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -21,7 +20,6 @@ function JoinGroup() {
 
 
     const [groupId, setGroupId] = useState(null);
-    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
         
     useEffect(() => {
@@ -66,6 +64,32 @@ function JoinGroup() {
         }
     };
 
+    const leaveGroup = async (event) => {
+      event.preventDefault();
+  
+      if (personId && groupId) {
+        try {
+          const groupData = await leaveMyGroup(groupId, personId);
+          const data = await fetchUserData();
+          setMyData(data.person_dict || {
+            groups: [],
+          })
+          if (!groupData) { 
+            setMessage('Group not found.');
+            return;
+          }
+          setMessage('Successfully left group!');
+          setGroupId('');
+        } catch (error) {
+          setMessage(`Error: ${error.message}`);
+        }
+      } else {
+        setMessage('Please fill in the Group ID.');
+      }
+  };
+
+
+
     return (
         <Box sx={{ display: 'flex' }}>
           <CustomAppBar />
@@ -73,7 +97,7 @@ function JoinGroup() {
           <Box component="main" sx={{ p: 3, width: 'calc(100% - 240px)' }}>
             <Toolbar />
             <Typography variant="h3">
-              Join Group
+              My Groups
             </Typography>
             <Divider />
             <Typography variant="h6" sx={{ mt: 2 }}>
@@ -134,9 +158,9 @@ function JoinGroup() {
               <Typography>{group.group_name}</Typography>
               <Typography>Group ID: {group.group_id}</Typography>
               <Typography>{group.description}</Typography>
-              <br/>
-              <Typography>Group Members:</Typography>
-              <Typography>{group.members}</Typography>
+              {/* <br/> */}
+              {/* <Typography>Group Members:</Typography>
+              <Typography>{group.members}</Typography> */}
           </Paper>
           </Grid2>
           ))}

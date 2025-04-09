@@ -39,8 +39,7 @@ export const drawerItems = [
     header: 'Groups',
     items: [
       { name: 'Updates', icon: <MailIcon />, page: '/updates' },
-      { name: 'Join Group', icon: <GroupAddIcon />, page: '/joingroup' },
-      { name: 'Leave Group', icon: <GroupRemoveIcon />, page: '/leavegroup' },
+      { name: 'My Groups', icon: <GroupAddIcon />, page: '/joingroup' },
     ]
   }
 ];
