@@ -3,9 +3,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from database_defs import Base, Papers, Journals, Authors, People, Institutions, DiscussionGroups, GroupMembers
 from constants import test_input
+from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 
 # Fetch cancer research papers from Semantic Scholar
-def get_cancer_research_papers(query="cancer research", limit=20, fields=None, debug=False):
+def get_cancer_research_papers(query="cancer research", limit=100, fields=None, debug=False):
     if debug:
         return test_input
     
@@ -105,93 +107,85 @@ def populate_database():
     papers = get_cancer_research_papers()
 
     for paper in papers:
-        paper_id = paper.get("doi", paper.get("title").replace(" ", "_"))
+        doi = paper.get("doi")
+        title = paper.get("title")
+        if not doi:  # If DOI is missing, use title as fallback for uniqueness
+            doi = f"NO_DOI_{title[:10]}"  # Use a fallback DOI (combination of title)
+
         journal_name = paper.get("venue", "Unknown Journal")
+        
+        # Handle Journal
         journal = session.query(Journals).filter_by(journal_name=journal_name).first()
         if not journal:
-            journal = Journals(journal_id=journal_name.replace(" ", "_"), journal_name=journal_name, impact_factor="N/A")
+            journal = Journals(journal_name=journal_name) # Changed: no impact factor info available from Semantic Scholar
             session.add(journal)
-            session.commit()
+            session.flush()  # get auto-assigned journal_id
 
-        # Check if paper exists before adding
-        with session.no_autoflush:
-            existing_paper = session.query(Papers).filter_by(paper_id=paper_id).first()
-
+        # Handle Paper
+        existing_paper = session.query(Papers).filter_by(doi=doi).first()
         if not existing_paper:
             new_paper = Papers(
-                paper_id=paper_id,
                 doi=paper.get("doi"),
                 title=paper.get("title"),
-                publication_date=paper.get("year", "Unknown"),
+                publication_date=paper.get("year", None),
                 journal_id=journal.journal_id
             )
             session.add(new_paper)
-            session.commit()
+            session.flush()
+            print(f"Added new paper: {new_paper.title} with ID {new_paper.paper_id}")
         else:
             new_paper = existing_paper
+            print(f"Paper already exists: {new_paper.title} with ID {new_paper.paper_id}")
 
+        # Handle Authors
         authors = paper.get("authors", [])
-
         for i, author in enumerate(authors):
-            author_id = author.get("authorId", f"unknown_{author.get('name')}")
-            
-            # Check if person (author) already exists
-            with session.no_autoflush:
-                person = session.query(People).filter_by(person_id=author_id).first()
+            name_parts = author.get("name", "Unknown").split()
+            first_name = name_parts[0] if len(name_parts) > 0 else "Unknown"
+            last_name = name_parts[-1] if len(name_parts) > 1 else first_name
+
+            # Handle institution if first or last author
+            institution_id = None
+            if i == 0 or i == len(authors) - 1:
+                institution_name = author.get("affiliations", [{}])[0].get("name", "Unknown Institution")
+
+                institution = session.query(Institutions).filter_by(institution_name=institution_name).first()
+                if not institution:
+                    institution = Institutions(institution_name=institution_name)
+                    session.add(institution)
+                    session.flush()
+                institution_id = institution.institution_id
+
+            # Check for existing person by orcid_id
+            orcid_id = author.get("authorId")
+            person = session.query(People).filter_by(orcid_id=orcid_id).first() if orcid_id else None
 
             if not person:
-                author_name = author.get("name", "Unknown").split()
-                first_name = author_name[0] if len(author_name) > 0 else "Unknown"
-                last_name = author_name[-1] if len(author_name) > 1 else "Unknown"
-                
-                # Handle institution only for first and last authors
-                institution_name = (
-                    author.get("affiliations", [{}])[0].get("name", "Unknown Institution")
-                    if i == 0 or i == len(authors) - 1 else None
-                )
-                
-                institution_id = None
-                if institution_name:
-                    with session.no_autoflush:
-                        institution = session.query(Institutions).filter_by(institution_name=institution_name).first()
-                    if not institution:
-                        institution = Institutions(
-                            institution_id=institution_name.replace(" ", "_"),
-                            institution_name=institution_name
-                        )
-                        session.add(institution)
-                        session.commit()
-                    institution_id = institution.institution_id
-
-                # Add new author if not found
                 person = People(
-                    person_id=author_id,
+                    orcid_id=orcid_id,
                     first_name=first_name,
                     last_name=last_name,
                     institution_id=institution_id
                 )
                 session.add(person)
-                session.commit()
+                session.flush()
+            else:
+                # Person exists: update institution if not already set
+                if institution_id and not person.institution_id:
+                    person.institution_id = institution_id
 
-            # Check if the author-paper relationship already exists
-            with session.no_autoflush:
-                existing_author = (
-                    session.query(Authors)
-                    .filter_by(author_id=person.person_id, paper_id=new_paper.paper_id)
-                    .first()
-                )
-
+            # Check for author-paper duplicates
+            existing_author = session.query(Authors).filter_by(author_id=person.user_id, paper_id=new_paper.paper_id).first()
             if not existing_author:
                 try:
-                    new_author = Authors(
-                        author_id=person.person_id,
+                    author_entry = Authors(
+                        author_id=person.user_id,
                         paper_id=new_paper.paper_id
                     )
-                    session.add(new_author)
-                    session.commit()
+                    session.add(author_entry)
                 except IntegrityError:
                     session.rollback()
-                    print(f"Duplicate entry for author {person.person_id} and paper {new_paper.paper_id} ignored.")
+                    print(f"Duplicate author-paper link skipped for user_id={person.user_id}")
 
     session.commit()
     session.close()
@@ -201,7 +195,7 @@ if __name__ == "__main__":
     ## test the get_cancer_research_papers function
 
     papers = get_cancer_research_papers()
-    print(papers)
+    # print(papers)
 
-    # populate_database()
+    populate_database()
     populate_discussion_groups()
