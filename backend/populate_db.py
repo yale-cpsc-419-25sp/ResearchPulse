@@ -1,34 +1,75 @@
 import requests
+import json
+import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from database_defs import Base, Papers, Journals, Authors, People, Institutions, DiscussionGroups, GroupMembers
 from constants import test_input
 from datetime import datetime
+from tqdm import tqdm
 from sqlalchemy.exc import IntegrityError
 
 # Fetch cancer research papers from Semantic Scholar
-def get_cancer_research_papers(query="cancer research", limit=100, fields=None, debug=False):
+def get_cancer_research_papers(query="cancer research", total_valid=100, fields=None, debug=False):
     if debug:
         return test_input
-    
-    url = "https://api.semanticscholar.org/graph/v1/paper/search"
-    
+
+    url = "https://api.semanticscholar.org/graph/v1/paper/search/bulk"
+    valid_papers = []
+    token = None  # Used for pagination
+    batch_size = 100
+
     if fields is None:
-        fields = "title,venue,authors,year"
-    
-    params = {
-        "query": query,
-        "limit": limit,
-        "fields": fields
-    }
-    
-    response = requests.get(url, params=params)
-    
-    if response.status_code != 200:
-        print(f"Error: {response.status_code} - {response.text}")
-        return []
-        
-    return response.json().get("data", [])
+        fields = "title,venue,authors,year,externalIds,publicationDate"
+
+    with tqdm(total=total_valid, desc="Fetching valid papers") as pbar:
+        while len(valid_papers) < total_valid:
+            params = {
+                "query": query,
+                "limit": batch_size,
+                "fields": fields,
+            }
+            if token:
+                params["token"] = token
+
+            response = requests.get(url, params=params)
+
+            if response.status_code == 429:
+                print("Rate limit hit. Waiting before retrying...")
+                time.sleep(10)
+                continue
+
+            if response.status_code != 200:
+                print(f"Error: {response.status_code} - {response.text}")
+                break
+
+            time.sleep(1)  # Be respectful of rate limit
+
+            result_json = response.json()
+            data = result_json.get("data", [])
+            token = result_json.get("token")  # For pagination
+
+            if not data:
+                break  # No more results
+
+            # Filter for valid papers with a DOI
+            for paper in data:
+                external_ids = paper.get("externalIds", {})
+                doi = external_ids.get("DOI")
+                year = paper.get("year")
+
+                if doi and year:
+                    valid_papers.append(paper)
+                    pbar.update(1)
+
+                    if len(valid_papers) >= total_valid:
+                        break
+
+            if not token:
+                break  # No more pages
+
+    print(f"Retrieved {len(valid_papers)} valid papers.")
+    return valid_papers
 
 def get_discussion_group():
 
@@ -93,8 +134,20 @@ def populate_discussion_groups():
 
     session.close()
 
+def clear_all_tables(session):
+    # Order matters due to foreign key constraints
+    session.query(Authors).delete()
+    session.query(Papers).delete()
+    session.query(People).delete()
+    session.query(Institutions).delete()
+    session.query(Journals).delete()
+    session.query(GroupMembers).delete()
+    session.query(DiscussionGroups).delete()
+    session.commit()
+    print("All tables cleared.")
+
 # Populate the database with retrieved papers
-def populate_database():
+def populate_database(papers):
     # Use the RDS connection string here
     DATABASE_URL = "mysql+mysqlconnector://admin:c0eYBliLpdHULPaktvSE@researchpulse.cbkkuyoa4oz7.us-east-2.rds.amazonaws.com:3306/researchpulse"
 
@@ -104,13 +157,22 @@ def populate_database():
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    papers = get_cancer_research_papers()
+    clear_all_tables(session)
 
     for paper in papers:
-        doi = paper.get("doi")
+        # Extract DOI from externalIds dict
+        external_ids = paper.get("externalIds", {})
+        doi = external_ids.get("DOI")
+
         title = paper.get("title")
-        if not doi:  # If DOI is missing, use title as fallback for uniqueness
-            doi = f"NO_DOI_{title[:10]}"  # Use a fallback DOI (combination of title)
+        year = paper.get("year")
+        publication_date = paper.get("publicationDate")
+
+
+        # Skip if DOI is missing or year is missing or clearly invalid
+        if not doi or not year or not str(year).isdigit():
+            print(f"Skipping paper due to missing DOI or invalid year: {title}")
+            continue
 
         journal_name = paper.get("venue", "Unknown Journal")
         
@@ -125,9 +187,9 @@ def populate_database():
         existing_paper = session.query(Papers).filter_by(doi=doi).first()
         if not existing_paper:
             new_paper = Papers(
-                doi=paper.get("doi"),
-                title=paper.get("title"),
-                publication_date=paper.get("year", None),
+                doi=doi,
+                title=title,
+                publication_date=publication_date,
                 journal_id=journal.journal_id
             )
             session.add(new_paper)
@@ -158,7 +220,8 @@ def populate_database():
 
             # Check for existing person by orcid_id
             orcid_id = author.get("authorId")
-            person = session.query(People).filter_by(orcid_id=orcid_id).first() if orcid_id else None
+            with session.no_autoflush:
+                person = session.query(People).filter_by(orcid_id=orcid_id).first() if orcid_id else None
 
             if not person:
                 person = People(
@@ -194,8 +257,6 @@ def populate_database():
 if __name__ == "__main__":
     ## test the get_cancer_research_papers function
 
-    papers = get_cancer_research_papers()
-    # print(papers)
-
-    populate_database()
+    papers = get_cancer_research_papers(query = "cancer", total_valid=100)
+    populate_database(papers)
     populate_discussion_groups()
