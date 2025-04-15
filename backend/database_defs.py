@@ -23,7 +23,7 @@ class Institutions(Base):
 class People(Base):
     __tablename__ = 'people'
     
-    user_id = Column(Integer, primary_key=True, autoincrement=True)
+    person_id = Column(Integer, primary_key=True, autoincrement=True)
     orcid_id = Column(String(255), unique=True)
     first_name = Column(String(255))
     last_name = Column(String(255))
@@ -37,7 +37,7 @@ class People(Base):
 class UserLogin(Base):
     __tablename__ = 'user_login'
     
-    user_id = Column(Integer, ForeignKey('people.user_id'), primary_key=True)
+    person_id = Column(Integer, ForeignKey('people.person_id'), primary_key=True)
     username = Column(String(255), unique=True, nullable=False)  # Or email
     password_hash = Column(String(255), nullable=False)  # The hashed password (bcrypt hash)
     failed_attempts = Column(Integer, default=0)  # Optional: track failed login attempts
@@ -73,7 +73,7 @@ class AI_Summaries(Base):
 class Authors(Base):
     __tablename__ = 'authors'
     
-    author_id = Column(Integer, ForeignKey('people.user_id'), primary_key=True)
+    author_id = Column(Integer, ForeignKey('people.person_id'), primary_key=True)
     paper_id = Column(Integer, ForeignKey('papers.paper_id'), primary_key=True)
 
     paper = relationship("Papers", backref="authors")
@@ -90,13 +90,13 @@ class GroupMembers(Base):
     __tablename__ = 'group_members'
     
     group_id = Column(String(255), ForeignKey('discussion_groups.group_id'), primary_key=True)
-    person_id = Column(Integer, ForeignKey('people.user_id'), primary_key=True)
+    person_id = Column(Integer, ForeignKey('people.person_id'), primary_key=True)
 
 class PeopleFollowing(Base):
     __tablename__ = 'people_following'
     
-    user_id = Column(Integer, ForeignKey('people.user_id'), primary_key=True)
-    follower_id = Column(Integer, ForeignKey('people.user_id'), primary_key=True)
+    person_id = Column(Integer, ForeignKey('people.person_id'), primary_key=True)
+    follower_id = Column(Integer, ForeignKey('people.person_id'), primary_key=True)
 
 class Comments(Base):
     __tablename__ = 'comments'
@@ -110,7 +110,7 @@ class Comments(Base):
 class StarredPapers(Base):
     __tablename__ = 'starred_papers'
     
-    user_id = Column(Integer, ForeignKey('people.user_id'), primary_key=True)
+    person_id = Column(Integer, ForeignKey('people.person_id'), primary_key=True)
     paper_id = Column(Integer, ForeignKey('papers.paper_id'), primary_key=True)
     starred_date = Column(Date)
 

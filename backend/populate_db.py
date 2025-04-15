@@ -175,17 +175,17 @@ def populate_database():
                     person.institution_id = institution_id
 
             # Check for author-paper duplicates
-            existing_author = session.query(Authors).filter_by(author_id=person.user_id, paper_id=new_paper.paper_id).first()
+            existing_author = session.query(Authors).filter_by(author_id=person.person_id, paper_id=new_paper.paper_id).first()
             if not existing_author:
                 try:
                     author_entry = Authors(
-                        author_id=person.user_id,
+                        author_id=person.person_id,
                         paper_id=new_paper.paper_id
                     )
                     session.add(author_entry)
                 except IntegrityError:
                     session.rollback()
-                    print(f"Duplicate author-paper link skipped for user_id={person.user_id}")
+                    print(f"Duplicate author-paper link skipped for person_id={person.person_id}")
 
     session.commit()
     session.close()
