@@ -102,6 +102,7 @@ export const get_group_by_id = async (id) => {
   const data = await response.json();
   return data;
 };
+
 // Star a paper
 export const starPaper = async (person_id, paper_id) => {
   const response = await fetch('http://localhost:5000/star_paper', {
@@ -190,55 +191,88 @@ export const unfollowUser = async (personId, userId) => {
 
 // Fetch paper data by paper_id
 export const fetchPaperData = async (paperId) => {
-  console.log('Fetching paper data for paperId:', paperId);  // Add logging here
+  console.log('Fetching paper data for paperId:', paperId);  // Debugging log
   const response = await fetch(`http://localhost:5000/paper/${paperId}`);
   const data = await response.json();
   console.log('Fetched paper data:', data);  // Log the data fetched from the API
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch paper data');
+  }
+
   return data;
 };
 
-// Add a comment to a paper
-export const addComment = async (paperId, personId, commentText) => {
-  const response = await fetch('http://localhost:5000/add_comment', {
-    method: 'POST',
+
+export const getPaperData = async (paperId) => {
+  const response = await fetch(`http://localhost:5000/paper/${paperId}`, {
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      paper_id: paperId,
-      person_id: personId,
-      comment: commentText,
-    }),
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to add comment');
+    throw new Error(`Error: ${response.status} - ${response.statusText}`);
   }
 
-  return await response.json(); // Return the updated paper with the new comment
+  const data = await response.json();
+  return data;
+};
+
+// In api.js
+
+// Add a comment to a paper
+export const addComment = async (paperId, personId, commentText) => {
+  try {
+    const response = await fetch(`http://localhost:5000/paper/${paperId}/comment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        person_id: personId,
+        comment_text: commentText,  // Ensure the key name is correct
+        date: new Date().toISOString(),  // Automatically set the current date
+      }),
+    });
+
+    const data = await response.json();
+    console.log('Response Data:', data);  // Log the response from the backend
+
+    if (!response.ok) {
+      // If the response is not successful, throw an error
+      throw new Error(data.message || 'Failed to add comment');
+    }
+
+    return data;  // Return the response data
+  } catch (error) {
+    console.error('Error in addComment:', error);  // Log the error
+    throw error;  // Re-throw the error for further handling in the frontend
+  }
 };
 
 // Delete a comment from a paper
-export const deleteComment = async (paperId, commentId) => {
+export const deleteComment = async (personId, paperId, commentId) => {
   const response = await fetch('http://localhost:5000/delete_comment', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      paper_id: paperId,
-      comment_id: commentId,
+      paper_id: paperId,    // Send paper_id
+      comment_id: commentId, // Send comment_id
     }),
   });
 
+  const data = await response.json();
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to delete comment');
+    throw new Error(data.error || 'Failed to delete comment');
   }
 
-  return await response.json(); // Return updated paper data after deleting the comment
+  return data;  // Return success or error message
 };
+
 
 // Discovering recent papers 
 export const fetchDiscoverRecentPapers = async () => {
@@ -340,5 +374,17 @@ export const leaveMyGroup = async (group_id, person_id) => {
     throw error;  // Re-throw the error so the component knows it failed
     }
 };
+
+export const fetchGroupMembers = async (groupId) => {
+  const response = await fetch(`http://localhost:5000/group/${groupId}/members`);
+  const data = await response.json();
+
+  if (data.success) {
+    return data.members; // Return only the members array
+  }
+
+  throw new Error(data.error || 'Failed to fetch group members');
+};
+
 
 

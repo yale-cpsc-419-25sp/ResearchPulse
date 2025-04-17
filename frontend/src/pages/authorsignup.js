@@ -23,7 +23,7 @@ const Card = styled(MuiCard)(({ theme }) => ({
   },
 }));
 
-const SignUpContainer = styled(Stack)(({ theme }) => ({
+const AuthorSignupContainer = styled(Stack)(({ theme }) => ({
   height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
   minHeight: '100%',
   padding: theme.spacing(2),
@@ -32,11 +32,8 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-function Signup() {
+function AuthorSignup() {
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    institution_name: '',
     orcid_id: '',
     username: '',
     password: '',
@@ -45,9 +42,24 @@ function Signup() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSignup = async () => {
+  const handleAuthorSignup = async () => {
     try {
-      const response = await fetch('http://localhost:5000/signup', {
+      // Check if the ORCID ID exists
+      const checkResponse = await fetch('http://localhost:5000/check-orcid', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orcid_id: formData.orcid_id }),
+      });
+
+      if (!checkResponse.ok) {
+        const errorData = await checkResponse.json();
+        throw new Error(errorData.error || 'Author not found');
+      }
+
+      // Proceed with signup for the author
+      const response = await fetch('http://localhost:5000/signup-author', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,50 +74,32 @@ function Signup() {
 
       const data = await response.json();
       if (data.success) {
-        sessionStorage.setItem('person_id', data.person_id);
-        navigate('/login');
+        navigate('/login'); // Redirect to login page after successful signup
       }
     } catch (err) {
       setError(err.message);
     }
   };
 
-  const handleAuthorSignupRedirect = () => {
-    navigate('/authorsignup');  // Redirect to the author signup page
-  };
-
   return (
     <Box sx={{ backgroundColor: '#023E8A' }}>
-      <SignUpContainer direction="column" justifyContent="space-between">
+      <AuthorSignupContainer direction="column" justifyContent="space-between">
         <Card variant="outlined">
           <Typography component="h1" variant="h4" sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}>
-            Sign up
+            Author Signup
           </Typography>
           {error && <Typography color="error" variant="body2">{error}</Typography>}
           <FormControl>
-            <FormLabel htmlFor="first_name">First Name</FormLabel>
+            <FormLabel htmlFor="orcid_id">ORCID ID</FormLabel>
             <TextField
-              id="first_name"
-              name="first_name"
-              placeholder="Enter your first name"
+              id="orcid_id"
+              name="orcid_id"
+              placeholder="Enter your ORCID ID"
               variant="outlined"
               fullWidth
               required
-              value={formData.first_name}
-              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-            />
-          </FormControl>
-          <FormControl>
-            <FormLabel htmlFor="last_name">Last Name</FormLabel>
-            <TextField
-              id="last_name"
-              name="last_name"
-              placeholder="Enter your last name"
-              variant="outlined"
-              fullWidth
-              required
-              value={formData.last_name}
-              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+              value={formData.orcid_id}
+              onChange={(e) => setFormData({ ...formData, orcid_id: e.target.value })}
             />
           </FormControl>
           <FormControl>
@@ -135,19 +129,11 @@ function Signup() {
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
           </FormControl>
-          <Button type="submit" fullWidth variant="contained" onClick={handleSignup}>Sign Up</Button>
-          <Button
-            fullWidth
-            variant="text"
-            sx={{ marginTop: '10px' }}
-            onClick={handleAuthorSignupRedirect}
-          >
-            I have an ORCID ID
-          </Button>
+          <Button type="submit" fullWidth variant="contained" onClick={handleAuthorSignup}>Sign Up</Button>
         </Card>
-      </SignUpContainer>
+      </AuthorSignupContainer>
     </Box>
   );
 }
 
-export default Signup;
+export default AuthorSignup;

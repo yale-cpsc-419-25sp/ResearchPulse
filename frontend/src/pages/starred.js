@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // Import the useNavigate hook
 import { starPaper, unstarPaper, fetchUserData } from '../api';
 import { Box, Toolbar, Typography, Divider, TextField, Button } from '@mui/material';
 import { CustomAppBar } from './components/pagebar';
@@ -10,6 +12,7 @@ const StarredPage = () => {
   const [message, setMessage] = useState('');
   const [personId, setPersonId] = useState(null);
   const [myName, setMyName] = useState(null);
+  const navigate = useNavigate(); // Declare navigate to programmatically navigate to paper detail page
 
   useEffect(() => {
     const loadData = async () => {
@@ -33,23 +36,30 @@ const StarredPage = () => {
 
   const handleStarPaper = async (event) => {
     event.preventDefault();
-
+  
     if (personId && paperId) {
       try {
-        await starPaper(personId, paperId);
-        setMessage('Paper starred successfully!');
-        setStarredPapers((prevPapers) => [
-          ...prevPapers,
-          { paper_id: paperId, title: `${paperId}` },
-        ]);
-        setPaperId('');
+        const response = await starPaper(personId, paperId);
+  
+        // Check if the response is successful and if the paper is already starred
+        if (response.success) {
+          setMessage('Paper starred successfully!');
+          setStarredPapers((prevPapers) => [
+            ...prevPapers,
+            { paper_id: paperId, title: response.paper.title },
+          ]);
+        } else {
+          // If the paper is already starred, display the message from the backend
+          setMessage(response.message || 'Error starring the paper.');
+        }
+        setPaperId(''); // Clear input after starring
       } catch (error) {
         setMessage(`Error: ${error.message}`);
       }
     } else {
       setMessage('Please fill in the Paper ID.');
     }
-  };
+  };  
 
   const handleUnstarPaper = async (paperId) => {
     if (personId && paperId) {
@@ -70,9 +80,7 @@ const StarredPage = () => {
       <Box component="main" sx={{ p: 3, width: 'calc(100% - 240px)' }}>
         {/* Adjusting padding and width of main content area */}
         <Toolbar />
-        <Typography variant="h3">
-          Starred Papers
-        </Typography>
+        <Typography variant="h3">Starred Papers</Typography>
         <Divider />
         <div>
           <h2>Star a Paper</h2>
@@ -124,16 +132,23 @@ const StarredPage = () => {
               <p>No papers starred yet.</p>
             ) : (
               starredPapers.map((paper) => (
-                <li key={paper.paper_id}>
+                <li
+                  key={paper.paper_id} // Ensure unique key
+                  onClick={() => navigate(`/paper/${paper.paper_id}`)} // Navigate to paper detail page
+                  style={{ cursor: 'pointer' }}
+                >
                   {paper.title}
                   <Button
-                    onClick={() => handleUnstarPaper(paper.paper_id)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent navigating when clicking "Unstar"
+                      handleUnstarPaper(paper.paper_id);
+                    }}
                     variant="outlined"
                     color="secondary"
                     sx={{
                       marginLeft: '10px',
                       borderRadius: '8px',
-                      padding: '2px 5px', 
+                      padding: '2px 5px',
                     }}
                   >
                     Unstar

@@ -3,6 +3,7 @@ import './App.css';
 import Home from './pages/home';
 import Login from './pages/login';
 import Signup from './pages/signup';
+import AuthorSignup from './pages/authorsignup';
 import Dashboard from './pages/dashboard';
 import Profile from './pages/profile';
 import Starred from './pages/starred';
@@ -23,6 +24,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/authorsignup" element={<AuthorSignup />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/followedpapers" element={<FollowingPapers />} />

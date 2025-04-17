@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { fetchUserData, get_following_papers } from '../api';
 import { Box, Toolbar, Typography, Divider, Grid, Button, Paper, CircularProgress } from '@mui/material';
 import { CustomAppBar } from './components/pagebar';
 import { PageDrawer, drawerItems } from './components/pagedrawer';
-import { redirect } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { fetchUserData, get_following_papers } from '../api';
 
 const FollowingPapers = () => {
   const [userId, setUserId] = useState('');
@@ -15,29 +14,15 @@ const FollowingPapers = () => {
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  
-  // Toggle star/unstar
-  const handleStarToggle = (paper) => {
-    setPapers(prevPapers =>
-      prevPapers.map(p =>
-        p.paperId === paper.paperId ? { ...p, starred: !p.starred } : p
-      )
-    );
-  };
-  
+
   // Fetch user data and followed users
   const loadData = async () => {
     try {
       const data = await fetchUserData();
-      console.log('Fetched data:', data);
       setPersonId(data.person_id);
       setMyName(data.name);
       setFollowedUsers(data.following || []); // Set followed users
       const paperResults = await get_following_papers(data.person_id);
-
-      console.log('Followed papers:', paperResults);
-      console.log('Type of paperResults:', typeof paperResults);
-
       setPapers(paperResults);
       setLoading(false);
     } catch (error) {
@@ -46,10 +31,43 @@ const FollowingPapers = () => {
     }
   };
 
-  // Load data on component mount
   useEffect(() => {
     loadData();
   }, []);
+
+  // Toggle star/unstar
+  const handleStarToggle = async (paper) => {
+    try {
+      const url = paper.starred ? 'http://localhost:5000/unstar_paper' : 'http://localhost:5000/star_paper';
+      
+      // Send the request to the backend to star or unstar the paper
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          person_id: personId,  // Current logged-in user's person_id
+          paper_id: paper.paperId,  // The paper being starred/unstarred
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (data.success) {
+        // Toggle the 'starred' state in the UI based on the paper's current state
+        setPapers(prevPapers =>
+          prevPapers.map(p =>
+            p.paperId === paper.paperId ? { ...p, starred: !p.starred } : p
+          )
+        );
+      } else {
+        console.error('Error starring/un-starring paper:', data.error);
+      }
+    } catch (error) {
+      console.error('Error in star/unstar request:', error);
+    }
+  };
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -80,24 +98,22 @@ const FollowingPapers = () => {
             {papers.map((paper) => (
               <Grid item xs={12} sm={4} md={4} key={paper.paperId}>
                 <Paper elevation={3} sx={{ p: 2, borderRadius: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <Button
-                  onClick={() => navigate(`/paper/${paper.paperId}`)}
-                >
-                  {paper.title}
-                </Button>
+                  <Button onClick={() => navigate(`/paper/${paper.paperId}`)}>
+                    {paper.title}
+                  </Button>
                   <Typography variant="body2" color="text.secondary">
-                  <strong>Authors: </strong> 
+                    <strong>Authors: </strong>
                     {paper.authors?.map((a, index) => (
-                      <span 
-                      key={index} 
-                      style={{ 
-                        backgroundColor: a.isFollowed ? 'yellow' : 'inherit',
-                        padding: a.isFollowed ? '0.1rem' : '0', 
-                        borderRadius: '0.1rem' 
-                      }}
-                    >
-                      {a.name}{index < paper.authors.length - 1 ? ', ' : ''}
-                    </span>
+                      <span
+                        key={index}
+                        style={{
+                          backgroundColor: a.isFollowed ? 'yellow' : 'inherit',
+                          padding: a.isFollowed ? '0.1rem' : '0',
+                          borderRadius: '0.1rem',
+                        }}
+                      >
+                        {a.name}{index < paper.authors.length - 1 ? ', ' : ''}
+                      </span>
                     )) || 'Unknown'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -122,7 +138,6 @@ const FollowingPapers = () => {
       </Box>
     </Box>
   );
-}
-
+};
 
 export default FollowingPapers;

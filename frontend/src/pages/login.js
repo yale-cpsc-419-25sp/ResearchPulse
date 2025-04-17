@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -33,86 +34,82 @@ const LogInContainer = styled(Stack)(({ theme }) => ({
 }));
 
 function Login() {
-  const [userError, setUserError] = useState(false);
-  const [userErrorMessage, setUserErrorMessage] = useState('');
-  const [userId, setUserId] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = () => {
-    if (!userId) {
-      setUserError(true);
-      setUserErrorMessage('Please enter ID');
+    if (!username || !password) {
+      setErrorMessage('Please enter both username and password');
       return;
     }
 
     fetch('http://localhost:5000/login', {
       method: 'POST',
       headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({
-          person_id: userId
+        username,
+        password,
       }),
     })
-    .then(async res => {
+      .then(async res => {
         const data = await res.json();
         if (!res.ok) {
-            throw new Error(data.error || 'Login failed');
+          throw new Error(data.error || 'Login failed');
         }
         return data;
-    })
-    .then(data => {
-      if (data.success) {
+      })
+      .then(data => {
+        if (data.success) {
           console.log('Token:', data.token);  // Check if token is valid
           localStorage.setItem('token', data.token);
           localStorage.setItem('person_id', data.person_id);
-          window.location.href = '/dashboard';
-      }
-  })
-    .catch(err => {
-        setUserError(true);
-        setUserErrorMessage(err.message);
-    });
+          navigate('/dashboard');
+        }
+      })
+      .catch(err => {
+        setErrorMessage(err.message);
+      });
   };
 
   return (
-    <Box
-      sx={{
-        backgroundColor: '#023E8A'
-      }}>
+    <Box sx={{ backgroundColor: '#023E8A' }}>
       <LogInContainer direction="column" justifyContent="space-between">
         <Card variant="outlined">
-          <Typography
-            component="h1"
-            variant="h4"
-            sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
-          >
+          <Typography component="h1" variant="h4" sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}>
             Sign in
           </Typography>
+          {errorMessage && <Typography color="error">{errorMessage}</Typography>}
           <FormControl>
-            <FormLabel htmlFor="user_id">User ID</FormLabel>
+            <FormLabel htmlFor="username">Username</FormLabel>
             <TextField
-              error={userError}
-              helperText={userErrorMessage}
               type="text"
-              value={userId}
-              name="user_id"
-              placeholder="Enter your ID"
-              autoComplete="user_id"
+              value={username}
+              name="username"
+              placeholder="Enter your username"
               variant="outlined"
-              color={userError ? 'error' : 'primary'}
-              onChange={(event) => setUserId(event.target.value)}
+              onChange={(e) => setUsername(e.target.value)}
             />
           </FormControl>
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            onClick={handleSubmit}>Log in
-          </Button>
+          <FormControl>
+            <FormLabel htmlFor="password">Password</FormLabel>
+            <TextField
+              type="password"
+              value={password}
+              name="password"
+              placeholder="Enter your password"
+              variant="outlined"
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </FormControl>
+          <Button fullWidth variant="contained" onClick={handleSubmit}>Log in</Button>
         </Card>
       </LogInContainer>
-      </Box>
+    </Box>
   );
 }
 

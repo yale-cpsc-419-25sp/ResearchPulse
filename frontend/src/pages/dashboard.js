@@ -83,7 +83,17 @@ function Dashboard() {
                   page: '/starred'
                 })}
               </Link> 
-              {myGroupBox({height: 400,  width: 500, type: 'h5', title: 'Groups', titleStyle: { fontWeight: 'bold' }, attributes: myGroups})}
+              <Link to="/joingroup" style={{ textDecoration: 'none' }}>
+                {myGroupBox({
+                  height: 400, 
+                  width: 500, 
+                  type: 'h5', 
+                  title: 'Groups', 
+                  attributes: myGroups, 
+                  titleStyle: { fontWeight: 'bold' },
+                  page: '/joingroup'
+                })}
+              </Link> 
             </Grid>
           </Grid>
       </Box>

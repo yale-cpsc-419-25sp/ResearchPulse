@@ -116,14 +116,5 @@ class StarredPapers(Base):
 
     person = relationship("People", back_populates="starred_papers")
     paper = relationship("Papers", back_populates="starred_by")
-        
-# Establish connection to the RDS MySQL instance
+
 engine = create_engine(DATABASE_URL)
-
-# Drop all tables if they exist
-Base.metadata.drop_all(engine)
-
-# Create all tables defined in the Base class (i.e., in the database)
-Base.metadata.create_all(engine)
-
-print("Tables created successfully in the database!")
