@@ -725,7 +725,9 @@ def delete_comment():
 def api_recent_papers(current_user):
     try:
         session = Session()
-        papers = get_recent_papers(session, current_user)
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        papers = get_recent_papers(session, cursor, current_user)
         for p in papers:
             p["starred"] = is_paper_starred(current_user, p["paperId"])
 

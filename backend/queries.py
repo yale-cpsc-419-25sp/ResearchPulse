@@ -450,8 +450,14 @@ def insert_comment(paper_id, person_id, comment_text, date=None):
 
     finally:
         session.close()
-        
-def get_recent_papers(session, person_id, limit=100):
+
+import numpy as np
+from FlagEmbedding import FlagModel
+model = FlagModel('BAAI/bge-large-zh-v1.5', 
+                  query_instruction_for_retrieval="Generate a representation for this sentence for retrieving related articles:",
+                  use_fp16=True) # Setting use_fp16 to True speeds up computation with a slight performance degradation
+
+def get_recent_papers(session, cursor, person_id, limit=20):
     papers = (
         session.query(Papers)
         .order_by(Papers.publication_date.desc())
@@ -460,6 +466,24 @@ def get_recent_papers(session, person_id, limit=100):
     )
 
     paper_ids = [p.paper_id for p in papers]
+
+    starred_papers = get_starred_papers(cursor, person_id)
+    ## Note: starred_papers looks is a list of tuples like 
+    #(18, 'Breast Cancer: Postmastectomy Radiation Therapy, Locally Advanced Disease, and Inflammatory Breast Cancer', datetime.date(2011, 10, 27))
+    starred_titles = [
+        p[1] for p in starred_papers
+    ]
+    paper_titles = [
+        p.title for p in papers 
+    ]
+
+    embeddings_1 = model.encode(starred_titles)
+    embeddings_2 = model.encode(paper_titles)
+    similarity = embeddings_1 @ embeddings_2.T
+    
+    sim_arr = np.array(similarity)
+    papers_sorted = sorted(list(zip(np.sum(sim_arr, axis = 0).tolist(), papers)),reverse=True, key= lambda x: x[0])
+    papers = [p[1] for p in papers_sorted]
 
     starred_ids = set(
         r[0] for r in session.query(StarredPapers.paper_id)
