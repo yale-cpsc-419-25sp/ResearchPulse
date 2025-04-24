@@ -53,9 +53,21 @@ export const CustomAppBar = () => {
     navigate('/profile');
   };
 
+  const handleAboutClick = () => {
+    // Navigate to about page when "About" is clicked
+    navigate('/about');
+  }
+
   return (
     <MuiAppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
       <Toolbar>
+
+        <img
+          src="/ResearchPulse.svg"
+          alt="ResearchPulse logo"
+          style={{ width: 30, height: 'auto', marginBottom: 5, marginRight: 10 }}
+        />
+
         <Typography
           variant="h6"
           noWrap
@@ -99,7 +111,7 @@ export const CustomAppBar = () => {
           </Box>
         )}
         <Typography>
-          <Button color="inherit" sx={{ fontSize: 18 }}>
+          <Button color="inherit" sx={{ fontSize: 18 }} onClick={handleAboutClick}>
             About
           </Button>
         </Typography>

@@ -2,18 +2,20 @@ import { styled, alpha} from '@mui/material/styles';
 import { Box, InputBase} from '@mui/material';
 import { Button, Typography } from '@mui/material';
 
+
 // Styles and Boxes in the layout
 
 const myFollowingBox = ({height, width, type, title, titleStyle, attributes}) => (
-  <Button sx={{textTransform: 'none'}}>
+  <Button sx={{textTransform: 'none', p: 0}}>
     <Boxes height={height} width={width}>
-      <Typography variant={type} color="black" style={titleStyle}>
+      <Typography variant={type} color="black" style={titleStyle} paddingBlockEnd={2}>
         {title}
-      </Typography>
+      </Typography >
+
       {attributes.map((attr) => (
-        <Box key={attr?.person_id}>
+        <Typography key={attr?.person_id} variant={type} color="#084da6">
           {attr?.first_name} {attr?.last_name}
-        </Box>
+        </Typography>
       ))}
     </Boxes>
   </Button>
@@ -26,9 +28,9 @@ const myStarredBox = ({height, width, type, title, titleStyle, attributes}) => (
         {title}
         </Typography>
         {attributes.map((attr) => (
-          <Box>
+          <Typography variant={"h6"} color="#084da6">
             {attr?.title}
-          </Box>
+          </Typography>
         ))}
     </Boxes>
   </Button>
@@ -40,9 +42,9 @@ const myGroupBox = ({ height, width, type, title, titleStyle, attributes }) => (
         {title}
       </Typography>
         {attributes.map((attr) => (
-          <Box>
+          <Typography variant={type} color="#084da6">
             {attr?.group_name}
-          </Box>
+          </Typography>
         ))}
     </Boxes>
   </Button>
@@ -56,7 +58,7 @@ const ProfileBox = ({height, width, type, title, attributes}) => (
         {attributes.map((attr) => (
           <Box>
             {Object.keys(attr).map((key, index) => (
-              <Typography key={index}>{attr[key]}</Typography>
+              <Typography key={index} >{attr[key]} </Typography>
             ))}
           </Box>
         ))}

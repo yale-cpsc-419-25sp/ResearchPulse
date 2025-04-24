@@ -93,10 +93,6 @@ export const PageDrawer = ({ drawerItems, myName }) => {
       {drawerItems.map((component) => (
         <DrawerSection key={component.page} {...component} />
       ))}
-      <List>
-        <ListItem disablePadding sx={{ position: 'fixed', bottom: 10, width: drawerSize }}>
-        </ListItem>
-      </List>
     </Drawer>
   );
 };

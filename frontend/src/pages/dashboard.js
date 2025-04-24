@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import {Box, Toolbar, Typography, Divider} from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { CustomAppBar } from './components/pagebar';
-import { ProfileBox, myFollowingBox, myStarredBox, myGroupBox} from './components/layouts';
+import { myFollowingBox, myStarredBox, myGroupBox} from './components/layouts';
 import { PageDrawer, drawerItems } from './components/pagedrawer';
 import { fetchUserData } from '../api';
 
@@ -48,10 +48,12 @@ function Dashboard() {
           <Typography variant="h6">
             Welcome to
           </Typography>
+
           <Typography variant="h1" marginBlockEnd={3}>
             ResearchPulse
             <Divider sx={{ opacity:0.8}}/>
           </Typography>
+
         <Typography variant="h6" marginBlockEnd={3}>
           A web platform where researchers can stay up to date with the latest
           research and research discussions through personalized research feeds. 
