@@ -681,12 +681,14 @@ def add_comment(paper_id):
 
         # Add comment to the database (assuming insert_comment is implemented)
         new_comment = insert_comment(paper_id, person_id, comment_text, date)
+        user = get_person_data(person_id)
 
         return jsonify({
             "success": True,
             "comment_id": new_comment.comment_id,
-            "first_name": new_comment.first_name,
-            "last_name": new_comment.last_name,
+            "first_name": user['first_name'],
+            "last_name": user['last_name'],
+            "person_id": new_comment.person_id,
             "comment_text": new_comment.comment_text
         }), 200
 

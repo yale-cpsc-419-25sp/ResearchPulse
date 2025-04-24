@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Drawer, List, Toolbar, Typography, Divider } from '@mui/material';
+import { Box, Drawer, List, Toolbar, Typography, Divider, Stack, Chip} from '@mui/material';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -93,6 +93,10 @@ export const PageDrawer = ({ drawerItems, myName }) => {
       {drawerItems.map((component) => (
         <DrawerSection key={component.page} {...component} />
       ))}
+
+        <Stack direction="row" spacing={2} sx={{ mt: 'auto', pl: 1, pb: 2}}>
+          <Chip label="Yale University © 2025" />
+        </Stack>
     </Drawer>
   );
 };

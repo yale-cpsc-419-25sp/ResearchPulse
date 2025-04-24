@@ -69,10 +69,10 @@ function Profile() {
               </Typography>
 
             <Stack direction="row" spacing={2} >
-                <Chip label="Version 1.0.0" />
-                <Chip label="Built with React + Flask" />
-                <Chip label="Yale University © 2025" />
-              </Stack>
+              <Chip label="Version 1.0.0" />
+              <Chip label="Built with React + Flask" />
+              <Chip label="Yale University © 2025" />
+            </Stack>
       </Box>
     </Box>
   );

@@ -40,7 +40,7 @@ const PaperDetail = () => {
 
     if (personId && commentText) {
       try {
-        const newComment = await addComment(personId, paperId, commentText);
+        const newComment = await addComment(paperId, personId, commentText);
 
         // Log the response to see the comment text
         console.log('New Comment:', newComment);
@@ -69,7 +69,7 @@ const PaperDetail = () => {
   const handleDeleteComment = async (commentId) => {
     if (personId) {
       try {
-        const data = await deleteComment(personId, paperId, commentId);
+        await deleteComment(paperId, commentId);
         setComments(comments.filter(comment => comment.comment_id !== commentId)); // Remove the comment from the UI
         setMessage('Comment deleted successfully!');
       } catch (error) {

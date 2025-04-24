@@ -451,6 +451,8 @@ def insert_comment(paper_id, person_id, comment_text, date=None):
     finally:
         session.close()
 
+    return comment
+
 import numpy as np
 from FlagEmbedding import FlagModel
 model = FlagModel('BAAI/bge-large-zh-v1.5', 

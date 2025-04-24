@@ -225,6 +225,7 @@ export const getPaperData = async (paperId) => {
 // Add a comment to a paper
 export const addComment = async (paperId, personId, commentText) => {
   try {
+
     const response = await fetch(`http://localhost:5000/paper/${paperId}/comment`, {
       method: 'POST',
       headers: {
@@ -232,6 +233,7 @@ export const addComment = async (paperId, personId, commentText) => {
       },
       body: JSON.stringify({
         person_id: personId,
+        paper_id: paperId,
         comment_text: commentText,  // Ensure the key name is correct
         date: new Date().toISOString(),  // Automatically set the current date
       }),
@@ -253,7 +255,7 @@ export const addComment = async (paperId, personId, commentText) => {
 };
 
 // Delete a comment from a paper
-export const deleteComment = async (personId, paperId, commentId) => {
+export const deleteComment = async (paperId, commentId) => {
   const response = await fetch('http://localhost:5000/delete_comment', {
     method: 'POST',
     headers: {

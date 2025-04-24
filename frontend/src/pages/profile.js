@@ -66,11 +66,9 @@ function Profile() {
       <Box component="main" sx={{ p: 3 }}>
         <Toolbar />
         <Divider/>
-        <br/>
-        <Typography variant="h4">
+        <Typography variant="h4" sx = {{ mt: 2, mb: 2}}>
           My Profile
         </Typography>
-        <br/>
         <Divider/>
 
         <Grid container spacing={3} sx = {{ mt: 2 }}>
