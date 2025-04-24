@@ -116,14 +116,6 @@ const PaperDetail = () => {
                 comments.map((comment) => (
                   <li key={comment.comment_id}>
                     <strong>{comment.first_name} {comment.last_name}</strong>: {comment.comment_text}
-                    <Button
-                      onClick={() => handleDeleteComment(comment.comment_id)}  // Pass the correct comment_id
-                      variant="outlined"
-                      color="secondary"
-                      sx={{ marginLeft: '10px', borderRadius: '8px', padding: '2px 5px' }}
-                    >
-                      Delete
-                    </Button>
                   </li>
                 ))
               )}
