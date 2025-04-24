@@ -1,13 +1,22 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import {Box, Toolbar, Divider, Typography} from '@mui/material';
+import {Box, Toolbar, Divider, Typography, Card, CardHeader, CardContent} from '@mui/material';
 import Grid from '@mui/material/Grid2';
+import { styled } from '@mui/material/styles';
 import { CustomAppBar } from './components/pagebar';
 import { PageDrawer, drawerItems } from './components/pagedrawer';
 import { fetchUserData } from '../api';
 
 // Main Dashboard Page that displays the user's information
-
+const FixedCard = styled(Card)(({ theme }) => ({
+  border: `2px solid ${theme.palette.divider}`,   // nice light-grey line
+  borderRadius: 12,                               // soft corners
+  width: 320,                                     // fixed size
+  height: 240,
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'auto',                               // scroll if list is long
+}));
 function Profile() {
 
   const [myID, setMyID] = useState(null);
@@ -63,36 +72,46 @@ function Profile() {
         </Typography>
         <br/>
         <Divider/>
-          <Grid container spacing={1}>
-            <br/>
-            <Grid item style={{width: "100%"}}>
-              User ID: {myID}
-              <Box sx={{ mb: 4 }}>
-                <Typography>Name: {myData.first_name} {myData.last_name}</Typography>
+
+        <Grid container spacing={3} sx = {{ mt: 2 }}>
+          <Grid item xs={12} md={5}>
+            <FixedCard>
+              <CardHeader title="Basics" />
+              <CardContent sx={{flexGrow: 1}}>
+                <Typography>User ID: {myID}</Typography>
+                <Typography>
+                  Name: {myData.first_name} {myData.last_name}
+                </Typography>
                 <Typography>Institution ID: {myData.institution_id}</Typography>
-                <Typography>Department: {myData.primary_department}</Typography>
-              </Box>
-
-              <Box sx={{ mb: 4 }}>
-                <Typography >Starred Papers ({myData.starred_papers?.length || 0})</Typography>
-                {myData.starred_papers?.map(paper => (
-                  <Box key={paper.paper_id} sx={{ mb: 1 }}>
-                    <Typography >{paper.title}</Typography>
-                  </Box>
-                ))}
-              </Box>
-            
-              <Box sx={{ mb: 4 }}>
-                <Typography >Groups ({myData.groups?.length || 0})</Typography>
-                {myData.groups?.map(group => (
-                  <Box key={group.group_id} sx={{ mb: 1 }}>
-                    <Typography>{group.group_name}</Typography>
-                  </Box>
-                ))}
-              </Box>
-
-            </Grid>
+                <Typography>Department: {myData.primary_department || '—'}</Typography>
+              </CardContent>
+            </FixedCard>
           </Grid>
+
+          <Grid item xs={12} md={8}>
+            <FixedCard>
+              <CardHeader title={`Starred Papers (${myData.starred_papers.length})`} />
+              <CardContent sx={{flexGrow: 1}}>
+                {myData.starred_papers.map((p) => (
+                  <Typography key={p.paper_id} sx={{ mb: 1 }}>
+                    {p.title}
+                  </Typography>
+                ))}
+              </CardContent>
+            </FixedCard>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <FixedCard>
+              <CardHeader title={`Groups (${myData.groups.length})`} />
+              <CardContent sx={{flexGrow: 1}}>
+                {myData.groups.map((g) => (
+                  <Typography key={g.group_id}>{g.group_name}</Typography>
+                ))}
+              </CardContent>
+            </FixedCard>
+          </Grid>
+        </Grid>
       </Box>
     </Box>
   );
