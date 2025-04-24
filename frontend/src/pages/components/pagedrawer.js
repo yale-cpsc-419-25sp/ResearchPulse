@@ -4,13 +4,10 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import InfoIcon from '@mui/icons-material/Info';
-import MailIcon from '@mui/icons-material/Mail';
 import StarIcon from '@mui/icons-material/Star';
 import FeedIcon from '@mui/icons-material/Feed';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
-import GroupRemoveIcon from '@mui/icons-material/GroupRemove';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import {useNavigate } from 'react-router-dom';
 
@@ -38,7 +35,6 @@ export const drawerItems = [
   {
     header: 'Groups',
     items: [
-      { name: 'Updates', icon: <MailIcon />, page: '/updates' },
       { name: 'My Groups', icon: <GroupAddIcon />, page: '/joingroup' },
     ]
   }
@@ -99,12 +95,6 @@ export const PageDrawer = ({ drawerItems, myName }) => {
       ))}
       <List>
         <ListItem disablePadding sx={{ position: 'fixed', bottom: 10, width: drawerSize }}>
-          <ListItemButton>
-            <ListItemIcon>
-              <InfoIcon />
-            </ListItemIcon>
-            <ListItemText primary="Help" />
-          </ListItemButton>
         </ListItem>
       </List>
     </Drawer>
