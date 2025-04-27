@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { followUser, unfollowUser, fetchUserData } from '../api';
-import { Box, Toolbar, Typography, Divider, TextField, Button } from '@mui/material';
+import { searchUserByName, followUser, unfollowUser, fetchUserData } from '../api';
+import { Box, Toolbar, Typography, Divider, TextField, Button, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { CustomAppBar } from './components/pagebar';
 import { PageDrawer, drawerItems } from './components/pagedrawer';
 
 const Following = () => {
-  const [userId, setUserId] = useState('');
+  const [nameInput, setNameInput] = useState('');
   const [followedUsers, setFollowedUsers] = useState([]);
   const [message, setMessage] = useState('');
   const [personId, setPersonId] = useState(null);
   const [myName, setMyName] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
 
   // Fetch user data and followed users
   const loadData = async () => {
@@ -30,34 +32,48 @@ const Following = () => {
     loadData();
   }, []);
 
-  // Follow user handler
+  const handleSearchUser = async () => {
+    if (!nameInput.trim()) {
+      setMessage('Please enter a valid name.');
+      return;
+    }
+    try {
+      const results = await searchUserByName(nameInput);
+      if (results.length === 0) {
+        setMessage('No user found with that name.');
+        setSearchResults([]);
+      } else {
+        setMessage('');
+        setSearchResults(results.slice(0, 10)); // Show first 10 matches
+      }
+      setSelectedUserId(''); // Reset selected user ID after search
+    } catch (error) {
+      console.error('Error searching user:', error);
+      setMessage(`Error: ${error.message}`);
+      setSearchResults([]);
+    }
+  };
+
   const handleFollowUser = async (event) => {
     event.preventDefault();
-  
-    if (personId && userId) {
-      console.log('Following user:', userId, 'by person:', personId);  // Debugging log
-  
-      try {
-        // Send the follow request
-        const response = await followUser(personId, userId);
-        console.log('Follow response:', response);  // Debugging log
-        setMessage(response.message); // Display the response message
-  
-        // Fetch updated user data to include the newly followed user
-        const data = await fetchUserData(); // Get full user data again
-        console.log('Updated user data:', data);  // Debugging log
-  
-        // Update followed users with the full data of the followed user
-        setFollowedUsers(data.following || []);
-        setUserId(''); // Clear input after following
-      } catch (error) {
-        console.error('Error following user:', error);  // Debugging log
-        setMessage(`Error: ${error.message}`);
-      }
-    } else {
-      setMessage('Please enter a valid User ID.');
+    
+    if (!selectedUserId) {
+      setMessage('Please select a user to follow.');
+      return;
     }
-  };  
+
+    try {
+      const response = await followUser(personId, selectedUserId);
+      setMessage(response.message);
+      await loadData();
+      setNameInput('');
+      setSearchResults([]);
+      setSelectedUserId('');
+    } catch (error) {
+      console.error('Error following user:', error);
+      setMessage(`Error: ${error.message}`);
+    }
+  };
   
 
   // Unfollow user handler
@@ -81,19 +97,20 @@ const Following = () => {
         <Toolbar />
         <Typography variant="h3">Followed Users</Typography>
         <Divider />
+
         <div>
           <h2>Follow a User</h2>
           {personId && (
             <form
               onSubmit={handleFollowUser}
-              style={{ display: 'flex', alignItems: 'center', width: '100%' }}
+              style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '16px' }}
             >
               <TextField
-                id="userId"
-                label="Enter User ID"
+                id="nameInput"
+                label="Enter Name to Search"
                 variant="outlined"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
                 sx={{
                   mr: 2,
                   width: '70%',
@@ -102,6 +119,21 @@ const Following = () => {
                   },
                 }}
               />
+              <Button
+                type="button"
+                variant="outlined"
+                color="secondary"
+                onClick={handleSearchUser}
+                sx={{
+                  padding: '10px',
+                  fontSize: '16px',
+                  borderRadius: '8px',
+                  height: '56px',
+                  marginRight: 2,
+                }}
+              >
+                Search
+              </Button>
               <Button
                 type="submit"
                 variant="contained"
@@ -117,14 +149,34 @@ const Following = () => {
               </Button>
             </form>
           )}
-          <p>{message}</p>
+
+          {searchResults.length > 0 && (
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel id="select-user-label">Select User</InputLabel>
+              <Select
+                labelId="select-user-label"
+                value={selectedUserId}
+                label="Select User"
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                sx={{ borderRadius: '8px' }}
+              >
+                {searchResults.map((user) => (
+                  <MenuItem key={user.person_id} value={user.person_id}>
+                    {user.first_name} {user.last_name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+          <Typography variant="body1" sx={{ mb: 2 }}>{message}</Typography>
 
           <h3>Users You Follow:</h3>
-          <ul>
-            {followedUsers.length === 0 ? (
-              <p>You are not following anyone yet.</p>
-            ) : (
-              followedUsers.map((user) => (
+          {followedUsers.length === 0 ? (
+            <p>You are not following anyone yet.</p>
+          ) : (
+            <ul>
+              {followedUsers.map((user) => (
                 <li key={user.person_id}>
                   {user.first_name && user.last_name
                     ? `${user.first_name} ${user.last_name}`
@@ -134,17 +186,17 @@ const Following = () => {
                     variant="outlined"
                     color="secondary"
                     sx={{
-                        marginLeft: '10px',
-                        borderRadius: '8px',
-                        padding: '2px 5px', 
-                      }}
+                      marginLeft: '10px',
+                      borderRadius: '8px',
+                      padding: '2px 5px',
+                    }}
                   >
                     Unfollow
                   </Button>
                 </li>
-              ))
-            )}
-          </ul>
+              ))}
+            </ul>
+          )}
         </div>
       </Box>
     </Box>

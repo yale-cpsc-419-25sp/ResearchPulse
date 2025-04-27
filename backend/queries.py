@@ -31,6 +31,34 @@ def get_person_by_id(cursor, person_id):
     cursor.execute("SELECT * FROM people WHERE person_id = %s", (person_id,))
     return cursor.fetchone()
 
+def search_people_by_name(cursor, full_name):
+    # Split full_name into words
+    name_parts = full_name.strip().split()
+
+    if len(name_parts) == 1:
+        # If only one name part is queried, match either first or last name
+        query = """
+        SELECT person_id, first_name, last_name
+        FROM people
+        WHERE LOWER(first_name) LIKE LOWER(%s) OR LOWER(last_name) LIKE LOWER(%s)
+        LIMIT 10;
+        """
+        like_pattern = f"%{name_parts[0]}%"
+        cursor.execute(query, (like_pattern, like_pattern))
+
+    elif len(name_parts) >= 2:
+        # If two or more parts, try matching first and last name
+        first_name, last_name = name_parts[0], ' '.join(name_parts[1:])
+        query = """
+        SELECT person_id, first_name, last_name
+        FROM people
+        WHERE LOWER(first_name) LIKE LOWER(%s) AND LOWER(last_name) LIKE LOWER(%s)
+        LIMIT 10;
+        """
+        cursor.execute(query, (f"%{first_name}%", f"%{last_name}%"))
+
+    return cursor.fetchall()
+
 def get_followed_papers(session, person_id,limit=25):
     followed_ids = (
         session.query(PeopleFollowing.person_id)
@@ -101,11 +129,13 @@ def get_followed_papers(session, person_id,limit=25):
                 author_names = author_names + additional_authors
             author_names.append({"name": "et al.", "isFollowed": False})
 
+        journal_name = paper.journal.journal_name if paper.journal else 'N/A'
+
         result.append({
             "paperId": paper.paper_id,
             "title": paper.title,
             "year": str(paper.publication_date),
-            "venue": paper.journal_id,
+            "venue": journal_name,
             "authors": author_names,
             "starred": paper.paper_id in starred_ids,
         })
@@ -466,26 +496,32 @@ def get_recent_papers(session, cursor, person_id, limit=20):
         .limit(limit)
         .all()
     )
-
+    if not papers:
+        return []
+    
     paper_ids = [p.paper_id for p in papers]
 
     starred_papers = get_starred_papers(cursor, person_id)
     ## Note: starred_papers looks is a list of tuples like 
     #(18, 'Breast Cancer: Postmastectomy Radiation Therapy, Locally Advanced Disease, and Inflammatory Breast Cancer', datetime.date(2011, 10, 27))
-    starred_titles = [
-        p[1] for p in starred_papers
-    ]
-    paper_titles = [
-        p.title for p in papers 
-    ]
+    starred_titles = [p[1] for p in starred_papers]
 
-    embeddings_1 = model.encode(starred_titles)
-    embeddings_2 = model.encode(paper_titles)
-    similarity = embeddings_1 @ embeddings_2.T
-    
-    sim_arr = np.array(similarity)
-    papers_sorted = sorted(list(zip(np.sum(sim_arr, axis = 0).tolist(), papers)),reverse=True, key= lambda x: x[0])
-    papers = [p[1] for p in papers_sorted]
+    if starred_titles:
+        embeddings_1 = model.encode(starred_titles)
+        paper_titles = [p.title for p in papers]
+        embeddings_2 = model.encode(paper_titles)
+        similarity = embeddings_1 @ embeddings_2.T
+
+        sim_arr = np.array(similarity)
+        papers_sorted = sorted(
+            list(zip(np.sum(sim_arr, axis=0).tolist(), papers)),
+            reverse=True,
+            key=lambda x: x[0]
+        )
+        papers = [p[1] for p in papers_sorted]
+    else:
+        # No starred papers, so skip similarity step. Keep papers ordered by publication_date
+        pass
 
     starred_ids = set(
         r[0] for r in session.query(StarredPapers.paper_id)
@@ -510,11 +546,13 @@ def get_recent_papers(session, cursor, person_id, limit=20):
         if len(author_links) > 3:
             author_names.append({"name": "et al."})
 
+        journal_name = paper.journal.journal_name if paper.journal else 'N/A'
+
         result.append({
             "paperId": paper.paper_id,
             "title": paper.title,
             "year": str(paper.publication_date),
-            "venue": paper.journal_id,
+            "venue": journal_name,
             "authors": author_names,
             "starred": paper.paper_id in starred_ids,
         })

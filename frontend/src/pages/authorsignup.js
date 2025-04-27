@@ -81,6 +81,13 @@ function AuthorSignup() {
     }
   };
 
+  // Trigger submit on pressing Enter key if all fields are filled
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && Object.values(formData).every(field => field.trim() !== '')) {
+      handleAuthorSignup();
+    }
+  };
+
   return (
     <Box sx={{ backgroundColor: '#023E8A' }}>
       <AuthorSignupContainer direction="column" justifyContent="space-between">
@@ -100,6 +107,7 @@ function AuthorSignup() {
               required
               value={formData.orcid_id}
               onChange={(e) => setFormData({ ...formData, orcid_id: e.target.value })}
+              onKeyDown={handleKeyDown}
             />
           </FormControl>
           <FormControl>
@@ -113,6 +121,7 @@ function AuthorSignup() {
               required
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              onKeyDown={handleKeyDown}
             />
           </FormControl>
           <FormControl>
@@ -127,6 +136,7 @@ function AuthorSignup() {
               required
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onKeyDown={handleKeyDown}
             />
           </FormControl>
           <Button type="submit" fullWidth variant="contained" onClick={handleAuthorSignup}>Sign Up</Button>

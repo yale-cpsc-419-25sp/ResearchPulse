@@ -74,6 +74,12 @@ function Signup() {
     navigate('/authorsignup');  // Redirect to the author signup page
   };
 
+  // Trigger submit on pressing Enter key if all fields are filled
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && Object.values(formData).every(field => field.trim() !== '')) {
+      handleSignup();
+    }
+  };
   return (
     <Box sx={{ backgroundColor: '#023E8A' }}>
       <SignUpContainer direction="column" justifyContent="space-between">
@@ -93,6 +99,7 @@ function Signup() {
               required
               value={formData.first_name}
               onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+              onKeyDown={handleKeyDown}
             />
           </FormControl>
           <FormControl>
@@ -106,6 +113,7 @@ function Signup() {
               required
               value={formData.last_name}
               onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+              onKeyDown={handleKeyDown}
             />
           </FormControl>
           <FormControl>
@@ -119,6 +127,7 @@ function Signup() {
               required
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              onKeyDown={handleKeyDown}
             />
           </FormControl>
           <FormControl>
@@ -133,6 +142,7 @@ function Signup() {
               required
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onKeyDown={handleKeyDown}
             />
           </FormControl>
           <Button type="submit" fullWidth variant="contained" onClick={handleSignup}>Sign Up</Button>

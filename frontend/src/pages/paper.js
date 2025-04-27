@@ -13,6 +13,7 @@ const PaperDetail = () => {
   const [message, setMessage] = useState('');
   const [personId, setPersonId] = useState(null);
   const [myName, setMyName] = useState(null);
+  const [showAllAuthors, setShowAllAuthors] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -24,7 +25,12 @@ const PaperDetail = () => {
         // Fetch paper data using the paperId
         const paperData = await fetchPaperData(paperId);
         console.log('Paper Data:', paperData);  // Check the structure of paper data
-        setPaper(paperData.paper); // Set the whole paper object
+        setPaper({
+          ...paperData.paper,
+          authors: paperData.authors,
+          starred_by: paperData.starred_by,
+        });
+
         setComments(paperData.comments || []);  // Ensure comments is an empty array if undefined
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -92,17 +98,32 @@ const PaperDetail = () => {
           <div>
             <Typography variant="h5" sx={{ mt: 2 }}>
               <strong>Authors: </strong>
-              {paper.authors && paper.authors.length > 0
-                ? paper.authors.map((author, index) => {
-                    const fullName = `${author.first_name} ${author.last_name}`; // Construct full name
-                    return (
-                      <span key={author.person_id} style={{ marginRight: '0.5rem' }}>
-                        {fullName}
-                        {index < paper.authors.length - 1 && ', '}
-                      </span>
-                    );
-                })
-                : 'Unknown'}
+              {paper.authors && paper.authors.length > 0 ? (
+                <>
+                  { (showAllAuthors ? paper.authors : paper.authors.slice(0, 5)).map((author, index) => {
+                      const fullName = `${author.first_name} ${author.last_name}`;
+                      return (
+                        <span key={author.person_id} style={{ marginRight: '0.5rem' }}>
+                          {fullName}
+                          {index < (showAllAuthors ? paper.authors.length : 5) - 1 && ','}
+                        </span>
+                      );
+                    })
+                  }
+                  {paper.authors.length > 5 && (
+                    <Button
+                      variant="text"
+                      size="small"
+                      onClick={() => setShowAllAuthors(!showAllAuthors)}
+                      sx={{ ml: 1 }}
+                    >
+                      {showAllAuthors ? 'Show Less' : `+${paper.authors.length - 5} More`}
+                    </Button>
+                  )}
+                </>
+              ) : (
+                'Unknown'
+              )}
             </Typography>
 
             <Divider sx={{ mt: 2 }} />

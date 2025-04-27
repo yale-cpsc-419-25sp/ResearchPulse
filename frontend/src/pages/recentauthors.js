@@ -49,16 +49,21 @@ function RecentAuthors() {
   }, []);
 
   // Handle follow action
-  const handleFollow = async (authorId) => {
+  const handleFollow = async (author) => {
+    if (!personId) {
+      setMessage('Error: Missing person_id');
+      return;
+    }
+
     try {
-      if (followedAuthors.includes(authorId)) {
-        await unfollowUser(personId, authorId);
-        setMessage(`You have unfollowed author ${authorId}`);
-        setFollowedAuthors((prev) => prev.filter((id) => id !== authorId));
+      if (followedAuthors.includes(author.person_id)) {
+        await unfollowUser(personId, author.person_id);
+        setMessage(`You have unfollowed author: ${author.first_name} ${author.last_name}`);
+        setFollowedAuthors((prev) => prev.filter((id) => id !== author.person_id));
       } else {
-        await followUser(personId, authorId);
-        setMessage(`You are now following author ${authorId}`);
-        setFollowedAuthors((prev) => [...prev, authorId]);
+        await followUser(personId, author.person_id);
+        setMessage(`You are now following author: ${author.first_name} ${author.last_name}`);
+        setFollowedAuthors((prev) => [...prev, author.person_id]);
       }
     } catch (error) {
       console.error('Error following author:', error);
@@ -116,7 +121,7 @@ function RecentAuthors() {
                   <Button
                     variant={followedAuthors.includes(author.person_id) ? 'outlined' : 'contained'}
                     color="primary"
-                    onClick={() => handleFollow(author.person_id)}
+                    onClick={() => handleFollow(author)}
                     sx={{ mt: 1, borderRadius: 2 }}
                   >
                     {followedAuthors.includes(author.person_id) ? 'Unfollow' : 'Follow'}

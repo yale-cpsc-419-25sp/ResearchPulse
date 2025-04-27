@@ -76,6 +76,13 @@ function Login() {
       });
   };
 
+  // Trigger submit on pressing Enter key if both fields are filled
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && username && password) {
+      handleSubmit();
+    }
+  };
+
   return (
     <Box sx={{ backgroundColor: '#023E8A' }}>
       <LogInContainer direction="column" justifyContent="space-between">
@@ -93,6 +100,7 @@ function Login() {
               placeholder="Enter your username"
               variant="outlined"
               onChange={(e) => setUsername(e.target.value)}
+              onKeyDown={handleKeyDown}
             />
           </FormControl>
           <FormControl>
@@ -104,6 +112,7 @@ function Login() {
               placeholder="Enter your password"
               variant="outlined"
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleKeyDown}
             />
           </FormControl>
           <Button fullWidth variant="contained" onClick={handleSubmit}>Log in</Button>

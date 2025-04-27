@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from flask_cors import CORS
 import mysql.connector
-from queries import get_person_data, get_group_data, insert_following, insert_group_member, get_discussion_groups, get_followed_papers, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment, get_recent_papers, is_paper_starred, get_random_authors
+from queries import get_person_data, get_group_data, search_people_by_name, insert_following, insert_group_member, get_discussion_groups, get_followed_papers, get_following, get_group_by_id, get_person_by_id, get_random_papers, get_starred_papers, get_paper_data, insert_comment, get_recent_papers, is_paper_starred, get_random_authors
 from database_defs import Comments, Papers, Authors, DiscussionGroups, GroupMembers, People, StarredPapers
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
@@ -375,6 +375,36 @@ def followedPapers():
     finally:
         db_session.close()
 
+@app.route('/search_user', methods=['GET'])
+def search_user():
+    full_name = request.args.get('name')
+    if not full_name:
+        return jsonify({'error': 'Name parameter is required'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        users = search_people_by_name(cursor, full_name)
+
+        users_list = []
+        for user in users:
+            users_list.append({
+                'person_id': user['person_id'],
+                'first_name': user['first_name'],
+                'last_name': user['last_name']
+            })
+
+        return jsonify(users_list), 200
+
+    except Exception as e:
+        print(f"Error searching user: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
 @app.route('/following', methods=['POST'])
 def following():
 
@@ -390,6 +420,7 @@ def following():
 
     return following
 
+# TODO: Change to POST?
 @app.route('/starred_papers', methods=['GET'])
 def get_starred_papers(cursor, person_id):
     cursor.execute("""
@@ -410,6 +441,10 @@ def follow():
     follower_id = data.get('person_id')  # Current user (follower)
     followee_id = data.get('user_id')    # User to follow
 
+    # Check if the user is trying to follow themselves
+    if follower_id == followee_id:
+        return jsonify({"error": "You cannot follow yourself"}), 400
+    
     if not follower_id or not followee_id:
         return jsonify({"error": "Missing person_id or user_id"}), 400
 

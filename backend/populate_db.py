@@ -1,9 +1,10 @@
 import requests
+import random
 import json
 import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database_defs import Base, Papers, Journals, Authors, People, Institutions, DiscussionGroups, GroupMembers
+from database_defs import Base, Papers, Journals, Authors, People, Institutions, DiscussionGroups, GroupMembers, PeopleFollowing, Comments, StarredPapers, UserLogin
 from constants import test_input
 from datetime import datetime
 from tqdm import tqdm
@@ -71,6 +72,62 @@ def get_cancer_research_papers(query="cancer research", total_valid=100, fields=
     print(f"Retrieved {len(valid_papers)} valid papers.")
     return valid_papers
 
+def get_institutions():
+    institutions = [
+        {
+            "institution_name": "Harvard University",
+            "departments": [
+                "Department of Cancer Research",
+                "Department of Biological Chemistry and Molecular Pharmacology"
+            ]
+        },
+        {
+            "institution_name": "Stanford University",
+            "departments": [
+                "Stanford Cancer Institute",
+                "Department of Oncology"
+            ]
+        },
+        {
+            "institution_name": "Yale University",
+            "departments": [
+                "Yale School of Medicine",
+                "Department of Oncology",
+                "Yale Cancer Center"
+            ]
+        },
+        {
+            "institution_name": "Johns Hopkins University",
+            "departments": [
+                "Sidney Kimmel Comprehensive Cancer Center",
+                "Department of Oncology"
+            ]
+        },
+        {
+            "institution_name": "University of California, San Francisco",
+            "departments": [
+                "UCSF Helen Diller Family Comprehensive Cancer Center",
+                "Department of Cancer Biology"
+            ]
+        },
+        {
+            "institution_name": "Memorial Sloan Kettering Cancer Center",
+            "departments": [
+                "Department of Cancer Research",
+                "Department of Radiation Oncology"
+            ]
+        },
+        {
+            "institution_name": "Yale School of Public Health",
+            "departments": [
+                "Department of Epidemiology and Public Health",
+                "Center for Cancer Epidemiology"
+            ]
+        }
+    ]
+    
+    return institutions
+
 def get_discussion_group():
 
     groups = [
@@ -130,18 +187,20 @@ def populate_discussion_groups():
             if existing_group.description != group["description"]:
                 existing_group.description = group["description"]
     session.commit()
-
-
     session.close()
 
 def clear_all_tables(session):
     # Order matters due to foreign key constraints
+    session.query(GroupMembers).delete()
+    session.query(PeopleFollowing).delete()
+    session.query(StarredPapers).delete()
+    session.query(Comments).delete()
+    session.query(UserLogin).delete()
     session.query(Authors).delete()
     session.query(Papers).delete()
     session.query(People).delete()
     session.query(Institutions).delete()
     session.query(Journals).delete()
-    session.query(GroupMembers).delete()
     session.query(DiscussionGroups).delete()
     session.commit()
     print("All tables cleared.")
@@ -158,6 +217,7 @@ def populate_database(papers):
     session = Session()
 
     clear_all_tables(session)
+    institutions = get_institutions()
 
     for paper in papers:
         # Extract DOI from externalIds dict
@@ -167,7 +227,6 @@ def populate_database(papers):
         title = paper.get("title")
         year = paper.get("year")
         publication_date = paper.get("publicationDate")
-
 
         # Skip if DOI is missing or year is missing or clearly invalid
         if not doi or not year or not str(year).isdigit():
@@ -198,6 +257,20 @@ def populate_database(papers):
         else:
             new_paper = existing_paper
             print(f"Paper already exists: {new_paper.title} with ID {new_paper.paper_id}")
+        
+        # Randomly assign an institution and department to all authors for this paper
+        random_institution_data = random.choice(institutions)
+        institution_name = random_institution_data["institution_name"]
+        random_department = random.choice(random_institution_data["departments"])
+
+        # Check if institution already exists in the database
+        institution = session.query(Institutions).filter_by(institution_name=institution_name).first()
+        if not institution:
+            # If institution doesn't exist, add it
+            institution = Institutions(institution_name=institution_name)
+            session.add(institution)
+            session.flush()  # Get the auto-assigned institution_id
+            print(f"Added institution: {institution_name}")
 
         # Handle Authors
         authors = paper.get("authors", [])
@@ -205,18 +278,6 @@ def populate_database(papers):
             name_parts = author.get("name", "Unknown").split()
             first_name = name_parts[0] if len(name_parts) > 0 else "Unknown"
             last_name = name_parts[-1] if len(name_parts) > 1 else first_name
-
-            # Handle institution if first or last author
-            institution_id = None
-            if i == 0 or i == len(authors) - 1:
-                institution_name = author.get("affiliations", [{}])[0].get("name", "Unknown Institution")
-
-                institution = session.query(Institutions).filter_by(institution_name=institution_name).first()
-                if not institution:
-                    institution = Institutions(institution_name=institution_name)
-                    session.add(institution)
-                    session.flush()
-                institution_id = institution.institution_id
 
             # Check for existing person by orcid_id
             orcid_id = author.get("authorId")
@@ -227,15 +288,19 @@ def populate_database(papers):
                 person = People(
                     orcid_id=orcid_id,
                     first_name=first_name,
-                    last_name=last_name,
-                    institution_id=institution_id
+                    last_name=last_name
                 )
                 session.add(person)
                 session.flush()
             else:
-                # Person exists: update institution if not already set
-                if institution_id and not person.institution_id:
-                    person.institution_id = institution_id
+                # Person exists
+                pass
+            
+            # Assign the person to the institution and department
+            person.institution_id = institution.institution_id
+            person.primary_department = random_department
+            session.add(person)
+            session.flush()
 
             # Check for author-paper duplicates
             existing_author = session.query(Authors).filter_by(author_id=person.person_id, paper_id=new_paper.paper_id).first()
@@ -253,6 +318,45 @@ def populate_database(papers):
     session.commit()
     session.close()
     print("Database populated successfully!")
+
+
+
+def populate_institutions():
+    DATABASE_URL = "mysql+mysqlconnector://admin:c0eYBliLpdHULPaktvSE@researchpulse.cbkkuyoa4oz7.us-east-2.rds.amazonaws.com:3306/researchpulse"
+    
+    engine = create_engine(DATABASE_URL)
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    
+    institutions = get_institutions()
+
+    for institution_data in institutions:
+        institution_name = institution_data["institution_name"]
+        existing_institution = session.query(Institutions).filter_by(institution_name=institution_name).first()
+
+        if not existing_institution:
+            new_institution = Institutions(institution_name=institution_name)
+            session.add(new_institution)
+            session.flush()  # Get auto-assigned institution_id
+            print(f"Added new institution: {institution_name}")
+        else:
+            new_institution = existing_institution
+            print(f"Institution already exists: {institution_name}")
+        
+        # Handle departments for each institution
+        for department_name in institution_data["departments"]:
+            department = department_name
+            # Handle People (for simplicity, assuming we're adding only departments and institutions)
+            new_department = People(
+                institution_id=new_institution.institution_id,
+                primary_department=department
+            )
+            session.add(new_department)
+            print(f"Added department: {department} under {institution_name}")
+        
+    session.commit()
+    session.close()
 
 if __name__ == "__main__":
     ## test the get_cancer_research_papers function

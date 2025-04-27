@@ -139,6 +139,22 @@ export const unstarPaper = async (person_id, paper_id) => {
   return await response.json();
 };
 
+// Search for a user by their full name
+export const searchUserByName = async (fullName) => {
+  const response = await fetch(`http://localhost:5000/search_user?name=${encodeURIComponent(fullName)}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to search user');
+  }
+
+  const data = await response.json();
+  return data; // Returns an array of user objects: [{ person_id, first_name, last_name }, ...]
+};
+
 // Follow a user
 export const followUser = async (personId, userId) => {
   console.log('Sending follow request:', { person_id: personId, user_id: userId });  // Debugging log
@@ -202,7 +218,6 @@ export const fetchPaperData = async (paperId) => {
 
   return data;
 };
-
 
 export const getPaperData = async (paperId) => {
   const response = await fetch(`http://localhost:5000/paper/${paperId}`, {
