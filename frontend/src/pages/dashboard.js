@@ -38,7 +38,6 @@ function Dashboard() {
     loadData();
   }, []);
 
-  //TODO: Make ResearchPulse Heading a Button back to homepage
   return (
     <Box sx={{ display: 'flex' }}>
       <CustomAppBar/>
@@ -59,45 +58,60 @@ function Dashboard() {
           research and research discussions through personalized research feeds. 
         </Typography>
         <Divider/>
-          <Grid container spacing={3}>
-            <br/>
-            <Grid item style={{width: "100%"}}>
-              <Link to="/following" style={{ textDecoration: 'none' }}>
-                {myFollowingBox({
-                  height: 400, 
-                  width: 500, 
-                  type: 'h5', 
-                  title: 'My Following', 
-                  attributes: myFollowing, 
-                  titleStyle: { fontWeight: 'bold' },
-                  page: '/following'
-                })}
-              </Link> 
-              {myFollowingBox({height: 400,  width: 500, type: 'h5', title: 'My Followers', titleStyle: { fontWeight: 'bold' }, attributes: myFollowers})}
-              <Link to="/starred" style={{ textDecoration: 'none' }}>
-                {myStarredBox({
-                  height: 400, 
-                  width: 500, 
-                  type: 'h5', 
-                  title: 'Starred Papers', 
-                  attributes: myStarredPapers, 
-                  titleStyle: { fontWeight: 'bold' },
-                  page: '/starred'
-                })}
-              </Link> 
-              <Link to="/joingroup" style={{ textDecoration: 'none' }}>
-                {myGroupBox({
-                  height: 400, 
-                  width: 500, 
-                  type: 'h5', 
-                  title: 'Groups', 
-                  attributes: myGroups, 
-                  titleStyle: { fontWeight: 'bold' },
-                  page: '/joingroup'
-                })}
-              </Link> 
-            </Grid>
+        <Grid container spacing={3}>
+          <Grid item xs={12} sm={6} md={6}>
+            <Link to="/following" style={{ textDecoration: 'none' }}>
+              {myFollowingBox({
+                height: 400,
+                width: 500,
+                type: 'h5',
+                title: 'My Following',
+                attributes: myFollowing,
+                titleStyle: { fontWeight: 'bold' },
+                page: '/following'
+              })}
+            </Link>
           </Grid>
+
+          <Grid item xs={12} sm={6} md={6}>
+            {myFollowingBox({
+              height: 400,
+              width: 500,
+              type: 'h5',
+              title: 'My Followers',
+              attributes: myFollowers,
+              titleStyle: { fontWeight: 'bold' }
+            })}
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={6}>
+            <Link to="/starred" style={{ textDecoration: 'none' }}>
+              {myStarredBox({
+                height: 400,
+                width: 500,
+                type: 'h5',
+                title: 'Starred Papers',
+                attributes: myStarredPapers,
+                titleStyle: { fontWeight: 'bold' },
+                page: '/starred'
+              })}
+            </Link>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={6}>
+            <Link to="/joingroup" style={{ textDecoration: 'none' }}>
+              {myGroupBox({
+                height: 400,
+                width: 500,
+                type: 'h5',
+                title: 'Groups',
+                attributes: myGroups,
+                titleStyle: { fontWeight: 'bold' },
+                page: '/joingroup'
+              })}
+            </Link>
+          </Grid>
+        </Grid>
       </Box>
     </Box>
   );

@@ -1,3 +1,4 @@
+"""Program for test input"""
 test_input = [
         {
             "doi": "10.1038/s41586-2023-1234",

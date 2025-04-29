@@ -1,7 +1,5 @@
+"""Program for database"""
 import mysql.connector
-from sqlite3 import connect
-from contextlib import closing
-import sys
 
 db = mysql.connector.connect(
     host="researchpulse.cbkkuyoa4oz7.us-east-2.rds.amazonaws.com",  # RDS Endpoint
@@ -31,13 +29,13 @@ for table in tables:
 for i, table in enumerate(tables[:3]):  # Limit to first 3 tables
     table_name = table[0]
     print(f"\nFirst row of table '{table_name}':")
-    
+
     # Execute a query to get the first row of the table
     cursor.execute(f"SELECT * FROM {table_name} LIMIT 1")
-    
+
     # Fetch and print the first row
     first_row = cursor.fetchone()
     print(first_row if first_row else "No data available in this table.")
-    
+
 cursor.close()
 db.close()
