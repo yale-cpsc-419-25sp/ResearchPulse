@@ -64,7 +64,8 @@ const Following = () => {
 
     try {
       const response = await followUser(personId, selectedUserId);
-      setMessage(response.message);
+      const user = searchResults.find(user => user.person_id === selectedUserId);
+      setMessage(`You are now following ${user.first_name} ${user.last_name}`);
       await loadData();
       setNameInput('');
       setSearchResults([]);
@@ -81,7 +82,8 @@ const Following = () => {
     if (personId && userId) {
       try {
         await unfollowUser(personId, userId);
-        setMessage(`You have unfollowed User ${userId}`);
+        const user = followedUsers.find(u => u.person_id === userId);
+        setMessage(`You have unfollowed ${user.first_name} ${user.last_name}`);
         loadData(); 
       } catch (error) {
         setMessage(`Error: ${error.message}`);

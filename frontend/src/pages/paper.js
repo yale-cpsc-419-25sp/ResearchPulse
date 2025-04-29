@@ -58,7 +58,8 @@ const PaperDetail = () => {
             comment_id: newComment.comment_id,  // Ensure backend returns comment_id
             first_name: newComment.first_name,  // Ensure first_name is available
             last_name: newComment.last_name,    // Ensure last_name is available
-            comment_text: newComment.comment_text // Ensure comment_text is available
+            comment_text: newComment.comment_text, // Ensure comment_text is available
+            person_id: personId
           }
         ]);
 
@@ -137,6 +138,17 @@ const PaperDetail = () => {
                 comments.map((comment) => (
                   <li key={comment.comment_id}>
                     <strong>{comment.first_name} {comment.last_name}</strong>: {comment.comment_text}
+                    {comment.person_id === parseInt(personId) && (
+                      <Button
+                        variant="text"
+                        color="error"
+                        size="small"
+                        onClick={() => handleDeleteComment(comment.comment_id)}
+                        sx={{ ml: 2 }}
+                      >
+                        Delete
+                      </Button>
+                    )}
                   </li>
                 ))
               )}

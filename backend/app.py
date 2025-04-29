@@ -14,6 +14,7 @@ from queries import (
     get_starred_papers,
     get_paper_data,
     insert_comment,
+    delete_comment,
     get_recent_papers,
     is_paper_starred,
     get_random_authors,
@@ -792,10 +793,12 @@ def delete_comment():
 
         if not paper_id:
             return jsonify({"error": "Missing paper ID"}), 400
+        
+        db_session = Session()
 
         # Find the comment based on comment_id
         comment = (
-            session.query(Comments)
+            db_session.query(Comments)
                 .filter(
                     Comments.comment_id == comment_id,
                     Comments.paper_id == paper_id,
@@ -805,8 +808,10 @@ def delete_comment():
         if not comment:
             return jsonify({"error": "Comment not found"}), 404
 
-        session.delete(comment)  # Delete the comment
-        session.commit()  # Commit the deletion
+        db_session.delete(comment)  # Delete the comment
+        db_session.commit()  # Commit the deletion
+        db_session.close()
+
         return jsonify({"success": True}), 200
 
     except Exception as e:

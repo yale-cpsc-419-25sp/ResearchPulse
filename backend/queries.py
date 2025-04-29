@@ -423,8 +423,10 @@ def fetch_comments(session, paper_id):
         .join(People, Comments.person_id == People.person_id)
         .filter(Comments.paper_id == paper_id)
         .with_entities(
+            Comments.comment_id,
             Comments.comment_text,
             Comments.date,
+            People.person_id,
             People.first_name,
             People.last_name,
         )
@@ -470,8 +472,10 @@ def get_paper_data(session, paper_id):
         ],
         "comments": [
             {
+                "comment_id": c.comment_id,
                 "comment_text": c.comment_text,
                 "date": c.date,
+                "person_id": c.person_id,
                 "first_name": c.first_name,
                 "last_name": c.last_name,
             }
@@ -527,6 +531,31 @@ model = FlagModel(
     ),
     use_fp16=True,
 )
+
+def delete_comment(comment_id, paper_id):
+    """Delete a comment for a paper."""
+    session = Session()
+    try:
+        comment = (
+            session.query(Comments)
+            .filter_by(comment_id=comment_id, paper_id=paper_id)
+            .first()
+        )
+
+        if not comment:
+            return False, "Comment not found"
+
+        session.delete(comment)
+        session.commit()
+        return True, "Comment deleted successfully"
+
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Database error deleting comment: {e}")
+        return False, "Database error"
+
+    finally:
+        session.close()
 
 def build_paper_summary(session, paper, starred_ids):
     "function to build paper summary"
