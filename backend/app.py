@@ -611,7 +611,15 @@ def leave_group():
         if not group:
             return jsonify({'success': False, 'message': 'Group not found'}), 404
 
-        member = GroupMembers(group_id=group_id, person_id=person_id)
+        member = (
+            db.query(GroupMembers)
+            .filter_by(group_id=group_id, person_id=person_id)
+            .first()
+        )
+
+        if not member:
+            return jsonify({'success': False, 'message': 'Membership not found'}), 404
+
         db.delete(member)
         db.commit()
 
@@ -849,6 +857,28 @@ def api_random_authors():
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
         session.close()
+
+
+@app.route('/create_group', methods=['POST'])
+def create_group():
+    try:
+        data = request.get_json()
+        group_name = data.get('group_name')
+        description = data.get('description')
+
+        if not group_name or not description:
+            return jsonify({'success': False, 'error': 'Missing group name or description'}), 400
+
+        session_db = Session()
+        new_group = DiscussionGroups(group_name=group_name, description=description)
+        session_db.add(new_group)
+        session_db.commit()
+        session_db.close()
+
+        return jsonify({'success': True, 'group_id': new_group.group_id, 'message': 'Group created successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/logout', methods=['POST'])
 def logout():
