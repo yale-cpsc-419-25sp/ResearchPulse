@@ -144,35 +144,35 @@ def get_institutions():
 
     return institutions
 
-def get_discussion_group():
-    "function to get discussion groups"
-    groups = [
-        {
-            "group_id": "Group1",
-            "group_name": "Cancer Research Group",
-            "description": "A group for researchers working on cancer-related topics.",
-        },
-        {
-            "group_id": "Group2",
-            "group_name": "AI in Medicine",
-            "description": "A group for researchers exploring AI applications in medicine.",
-        },
-        {
-            "group_id": "Group3",
-            "group_name": "Genomics and Bioinformatics",
-            "description": (
-                "A community focused on large-scale genomics, sequencing technologies, "
-                "and data pipelines."
-            ),
-        },
-        {
-            "group_id": "Group4",
-            "group_name": "Public Health Policy",
-            "description": "Talk data-driven policies, global health challenges, and epidemiology.",
-        },
-    ]
+# def get_discussion_group():
+#     "function to get discussion groups"
+#     groups = [
+#         {
+#             "group_id": "Group1",
+#             "group_name": "Cancer Research Group",
+#             "description": "A group for researchers working on cancer-related topics.",
+#         },
+#         {
+#             "group_id": "Group2",
+#             "group_name": "AI in Medicine",
+#             "description": "A group for researchers exploring AI applications in medicine.",
+#         },
+#         {
+#             "group_id": "Group3",
+#             "group_name": "Genomics and Bioinformatics",
+#             "description": (
+#                 "A community focused on large-scale genomics, sequencing technologies, "
+#                 "and data pipelines."
+#             ),
+#         },
+#         {
+#             "group_id": "Group4",
+#             "group_name": "Public Health Policy",
+#             "description": "Talk data-driven policies, global health challenges, and epidemiology.",
+#         },
+#     ]
 
-    return groups
+#     return groups
 
 
 def populate_discussion_groups():

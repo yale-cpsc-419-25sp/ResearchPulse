@@ -88,15 +88,15 @@ class DiscussionGroups(Base): # pylint: disable=too-few-public-methods
     "Class for discussion groups"
     __tablename__ = 'discussion_groups'
 
-    group_id = Column(String(255), primary_key=True)
-    group_name = Column(String(255))
-    description = Column(String(255))
+    group_id = Column(Integer, primary_key=True, autoincrement=True)
+    group_name = Column(String(255), nullable=False)
+    description = Column(String(255), nullable=True)
 
 class GroupMembers(Base): # pylint: disable=too-few-public-methods
     "Class for group members"
     __tablename__ = 'group_members'
 
-    group_id = Column(String(255), ForeignKey('discussion_groups.group_id'), primary_key=True)
+    group_id = Column(Integer, ForeignKey('discussion_groups.group_id'), primary_key=True)
     person_id = Column(Integer, ForeignKey('people.person_id'), primary_key=True)
 
 class PeopleFollowing(Base): # pylint: disable=too-few-public-methods

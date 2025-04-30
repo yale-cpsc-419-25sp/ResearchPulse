@@ -15,7 +15,7 @@ import RecentAuthors from './pages/recentauthors';
 import JoinGroup from './pages/joingroup';
 import GroupPage from "./pages/groups";
 import About from "./pages/about";
-
+import CreateGroup from './pages/creategroup';
 
 function App() {
   return (
@@ -34,6 +34,7 @@ function App() {
         <Route path="/recentauthors" element={<RecentAuthors />} />
         <Route path="/joingroup" element={<JoinGroup/>} />
         <Route path="/group/:groupId" element={<GroupPage/>} />
+        <Route path="/creategroup" element={<CreateGroup />} />
         <Route path="/about" element={<About/>} />
         <Route path="*" element={<div>404 Not Found</div>} />
         <Route path="/paper/:paperId" element={<PaperDetail />} />

@@ -403,5 +403,20 @@ export const fetchGroupMembers = async (groupId) => {
   throw new Error(data.error || 'Failed to fetch group members');
 };
 
+export const createGroup = async (group_name, description) => {
+  const response = await fetch('http://localhost:5000/create_group', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ group_name, description }),
+  });
 
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to create group');
+  }
+
+  return data;
+};
 

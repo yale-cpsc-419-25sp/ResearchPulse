@@ -8,6 +8,7 @@ import StarIcon from '@mui/icons-material/Star';
 import FeedIcon from '@mui/icons-material/Feed';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import GroupIcon from '@mui/icons-material/Group';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import {useNavigate } from 'react-router-dom';
 
@@ -35,7 +36,8 @@ export const drawerItems = [
   {
     header: 'Groups',
     items: [
-      { name: 'My Groups', icon: <GroupAddIcon />, page: '/joingroup' },
+      { name: 'My Groups', icon: <GroupIcon />, page: '/joingroup' },
+      { name: 'Create Group', icon: <GroupAddIcon />, page: '/creategroup' },
     ]
   }
 ];
