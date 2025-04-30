@@ -873,6 +873,7 @@ def create_group():
         new_group = DiscussionGroups(group_name=group_name, description=description)
         session_db.add(new_group)
         session_db.commit()
+        group_id = new_group.group_id
         session_db.close()
 
         return jsonify({'success': True, 'group_id': new_group.group_id, 'message': 'Group created successfully'})
