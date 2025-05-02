@@ -24,7 +24,8 @@ DATABASE_URL = (
     "researchpulse"
 )
 # Create SQLAlchemy engine and session
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL,
+                       pool_size=15, max_overflow=15)
 Session = sessionmaker(bind=engine)
 
 def insert_following():
@@ -524,14 +525,6 @@ def insert_comment(paper_id, person_id, comment_text, date=None):
 
     return comment
 
-model = FlagModel(
-    'BAAI/bge-large-zh-v1.5',
-    query_instruction_for_retrieval=(
-        "Generate a representation for this sentence for retrieving related articles:"
-    ),
-    use_fp16=True,
-)
-
 def delete_comment(comment_id, paper_id):
     """Delete a comment for a paper."""
     session = Session()
@@ -559,18 +552,7 @@ def delete_comment(comment_id, paper_id):
 
 def build_paper_summary(session, paper, starred_ids):
     "function to build paper summary"
-    author_links = session.query(Authors).filter_by(paper_id=paper.paper_id).all()
     author_names = []
-
-    for p in author_links[:3]:
-        person = session.query(People).filter_by(person_id=p.author_id).first()
-        if person:
-            full_name = f"{person.first_name} {person.last_name}"
-            author_names.append({"name": full_name})
-
-    if len(author_links) > 3:
-        author_names.append({"name": "et al."})
-
     journal_name = paper.journal.journal_name if paper.journal else 'N/A'
 
     return {
@@ -581,6 +563,17 @@ def build_paper_summary(session, paper, starred_ids):
         "authors": author_names,
         "starred": paper.paper_id in starred_ids,
     }
+
+import torch 
+
+#check if mps or gpu is available 
+model = FlagModel(
+    'BAAI/bge-small-en-v1.5',
+    query_instruction_for_retrieval=(
+        "Generate a representation for this sentence for retrieving related articles:"
+    ),
+    use_fp16=True,
+)
 
 def sort_papers_by_similarity(starred_titles, papers):
     "function to sort by similarity"
@@ -604,15 +597,16 @@ def get_recent_papers(session, cursor, person_id, limit=20):
         .limit(limit)
         .all()
     )
+
     if not papers:
         return []
 
     paper_ids = [p.paper_id for p in papers]
 
     starred_papers = get_starred_papers(cursor, person_id)
-    starred_titles = [p[1] for p in starred_papers]
+    starred_titles = [p[0] for p in starred_papers]
 
-    if starred_titles:
+    if starred_titles and (torch.cuda.is_available() or torch.mps.is_available()):
         papers = sort_papers_by_similarity(starred_titles, papers)
 
     starred_ids = set(
@@ -623,6 +617,7 @@ def get_recent_papers(session, cursor, person_id, limit=20):
     )
 
     result = [build_paper_summary(session, paper, starred_ids) for paper in papers]
+    
     return result
 
 def get_random_authors(session, limit=5):

@@ -94,9 +94,6 @@ function RecentPapers() {
                   {paper.title}
                 </Button>
                   <Typography variant="body2" color="text.secondary">
-                    <strong>Authors:</strong> {paper.authors?.map((a) => a.name).join(', ') || 'Unknown'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
                     <strong>Journal:</strong> {paper.venue || 'N/A'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
