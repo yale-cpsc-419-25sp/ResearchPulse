@@ -1,5 +1,19 @@
 # Research Pulse
 
+<img height = "100"
+src="ResearchPulse.svg"
+alt="ResearchPulse logo"
+/>
+
+A platform where researchers can stay up to date with the latest research and research discussions through personalized research feeds. 
+
+## Features
+Following feed - see papers published by individuals, institutions, or journals you are following 
+Starred Papers - star or save papers of any kind
+Discovery feed - see papers algorithmically recommended based on saved papers, followers, etc. 
+Groups - be able to create a group with other researchers when you can share and discuss papers in the app
+Comments - Researchers can comment in a comment section attached to each paper
+
 ## Setup Instructions
 
 ### Creating a Virtual Environment
