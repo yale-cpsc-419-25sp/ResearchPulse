@@ -890,6 +890,31 @@ def create_group():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/search_group')
+def search_group():
+    name = request.args.get('name')
+    if not name:
+        return jsonify({'success': False, 'error': 'Missing group name'}), 400
+
+    session_db = Session()
+
+    try:
+        results = session_db.query(DiscussionGroups).filter(
+            DiscussionGroups.group_name.ilike(f"%{name}%")
+        ).all()
+
+        return jsonify([
+            {
+                'group_id': g.group_id,
+                'group_name': g.group_name,
+                'description': g.description
+            } for g in results
+        ])
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        session_db.close()
+
 
 @app.route('/logout', methods=['POST'])
 def logout():
