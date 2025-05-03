@@ -4,7 +4,7 @@ import {Box, Toolbar, Divider, Typography, Paper, Grid2} from '@mui/material';
 import {TextField, Button } from '@mui/material';
 import { CustomAppBar } from './components/pagebar';
 import { PageDrawer, drawerItems } from './components/pagedrawer';
-import { fetchUserData, joinGroup, leaveMyGroup} from '../api';
+import { fetchUserData, joinGroup, leaveMyGroup, getGroupByName} from '../api';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -19,7 +19,7 @@ function JoinGroup() {
     });
 
 
-    const [groupId, setGroupId] = useState(null);
+    const [groupName, setGroupName] = useState('');
     const navigate = useNavigate();
         
     useEffect(() => {
@@ -41,54 +41,55 @@ function JoinGroup() {
     }, []);
 
     const joinNewGroup = async (event) => {
-        event.preventDefault();
-    
-        if (personId && groupId) {
-          try {
-            const groupData = await joinGroup(groupId, personId);
-            const data = await fetchUserData();
-            setMyData(data.person_dict || {
-              groups: [],
-            })
-            if (!groupData) { 
-              setMessage('Group not found.');
-              return;
-            }
-            setMessage('Successfully joined group!');
-            setGroupId('');
-          } catch (error) {
-            setMessage(`Error: ${error.message}`);
-          }
-        } else {
-          setMessage('Please fill in the Group ID.');
-        }
-    };
-
-    const leaveGroup = async (event) => {
       event.preventDefault();
-  
-      if (personId && groupId) {
+    
+      if (personId && groupName.trim()) {
         try {
-          const groupData = await leaveMyGroup(groupId, personId);
-          const data = await fetchUserData();
-          setMyData(data.person_dict || {
-            groups: [],
-          })
-          if (!groupData) { 
+          const results = await getGroupByName(groupName.trim());
+          if (!results || results.length === 0) {
             setMessage('Group not found.');
             return;
           }
-          setMessage('Successfully left group!');
-          setGroupId('');
+    
+          const groupToJoin = results[0]; // join the first match
+          await joinGroup(groupToJoin.group_id, personId);
+    
+          const data = await fetchUserData();
+          setMyData(data.person_dict || { groups: [] });
+    
+          setMessage(`Successfully joined "${groupToJoin.group_name}"!`);
+          setGroupName('');
         } catch (error) {
-          setMessage(`Error: ${error.message}`);
+          setMessage(`Error: Unable to add group`);
         }
       } else {
-        setMessage('Please fill in the Group ID.');
+        setMessage('Please enter a group name.');
       }
-  };
+    };
 
-
+  //   const leaveGroup = async (event) => {
+  //     event.preventDefault();
+  
+  //     if (personId && groupId) {
+  //       try {
+  //         const groupData = await leaveMyGroup(groupId, personId);
+  //         const data = await fetchUserData();
+  //         setMyData(data.person_dict || {
+  //           groups: [],
+  //         })
+  //         if (!groupData) { 
+  //           setMessage('Group not found.');
+  //           return;
+  //         }
+  //         setMessage('Successfully left group!');
+  //         setGroupName('');
+  //       } catch (error) {
+  //         setMessage(`Error: ${error.message}`);
+  //       }
+  //     } else {
+  //       setMessage('Please fill in the Group ID.');
+  //     }
+  // };
 
     return (
         <Box sx={{ display: 'flex' }}>
@@ -103,7 +104,7 @@ function JoinGroup() {
             <Typography variant="h6" sx={{ mt: 2 }}>
             Do you want to join discussions with other researchers in your fields?<br/>
             Have a group you want to join? <br/> <br/>
-            Enter the group ID below!
+            Enter the Group Name below!
             </Typography>
             <br></br>
 
@@ -112,11 +113,11 @@ function JoinGroup() {
             {personId && (
               <form onSubmit={joinNewGroup} style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                 <TextField
-                  id="groupId"
-                  label="Enter Group ID"
+                  id="groupName"
+                  label="Enter Group Name"
                   variant="outlined"
-                  value={groupId}
-                  onChange={(e) => setGroupId(e.target.value)}
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
                   sx={{
                     mr: 2,
                     width: '30%',

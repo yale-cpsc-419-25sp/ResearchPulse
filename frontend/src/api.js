@@ -420,6 +420,18 @@ export const createGroup = async (group_name, description) => {
   return data;
 };
 
+export async function getGroupByName(groupName) {
+  const response = await fetch(`/search_group?name=${encodeURIComponent(groupName)}`, {
+    method: 'GET',
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch group: ${response.statusText}`);
+  }
+  return await response.json(); 
+}
+
 export const searchPaperByTitle = async (title) => {
   try {
     const response = await fetch(`/search_paper?title=${encodeURIComponent(title)}`, {
