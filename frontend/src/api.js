@@ -420,3 +420,23 @@ export const createGroup = async (group_name, description) => {
   return data;
 };
 
+export const searchPaperByTitle = async (title) => {
+  try {
+    const response = await fetch(`/search_paper?title=${encodeURIComponent(title)}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error searching for paper:', error);
+    throw error;
+  }
+};

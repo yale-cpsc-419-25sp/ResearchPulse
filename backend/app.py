@@ -627,6 +627,14 @@ def leave_group():
 
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+    
+@app.route('/search_paper', methods=['GET'])
+@token_required
+def search_paper(current_user):
+    title = request.args.get('title')
+    if not title: return jsonify([]), 400
+    papers = Session().query(Papers).filter(Papers.title.like(f'%{title}%')).limit(5).all()
+    return jsonify([{'paper_id': p.paper_id, 'title': p.title} for p in papers]), 200
 
 @app.route('/star_paper', methods=['POST'])
 def star_paper():
