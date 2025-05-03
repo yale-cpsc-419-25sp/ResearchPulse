@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchUserData, fetchPaperData, addComment, deleteComment } from '../api';
-import { Box, Toolbar, Typography, Divider, TextField, Button, CircularProgress } from '@mui/material';
+import { Box, Toolbar, Typography, Divider, TextField, Button} from '@mui/material';
 import { CustomAppBar } from './components/pagebar';
 import { PageDrawer, drawerItems } from './components/pagedrawer';
 

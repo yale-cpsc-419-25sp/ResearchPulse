@@ -424,6 +424,7 @@ export const searchPaperByTitle = async (title) => {
   try {
     const response = await fetch(`/search_paper?title=${encodeURIComponent(title)}`, {
       method: 'GET',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
