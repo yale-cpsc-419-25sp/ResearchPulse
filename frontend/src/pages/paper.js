@@ -101,16 +101,15 @@ const PaperDetail = () => {
               <strong>Authors: </strong>
               {paper.authors && paper.authors.length > 0 ? (
                 <>
-                  { (showAllAuthors ? paper.authors : paper.authors.slice(0, 5)).map((author, index) => {
-                      const fullName = `${author.first_name} ${author.last_name}`;
-                      return (
-                        <span key={author.person_id} style={{ marginRight: '0.5rem' }}>
-                          {fullName}
-                          {index < (showAllAuthors ? paper.authors.length : 5) - 1 && ','}
-                        </span>
-                      );
-                    })
-                  }
+                  {(showAllAuthors ? paper.authors : paper.authors.slice(0, 5)).map((author, index, arr) => {
+                    const fullName = `${author.first_name} ${author.last_name}`;
+                    const isLast = index === arr.length - 1;
+                    return (
+                      <span key={author.person_id} style={{ marginRight: '0.5rem' }}>
+                        {fullName}{isLast ? '.' : ','}
+                      </span>
+                    );
+                  })}
                   {paper.authors.length > 5 && (
                     <Button
                       variant="text"

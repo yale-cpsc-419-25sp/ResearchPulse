@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { fetchUserData, get_following_papers } from '../api';
 
 const FollowingPapers = () => {
-  const [userId, setUserId] = useState('');
   const [followedUsers, setFollowedUsers] = useState([]);
   const [message, setMessage] = useState('');
   const [personId, setPersonId] = useState(null);
@@ -103,18 +102,23 @@ const FollowingPapers = () => {
                   </Button>
                   <Typography variant="body2" color="text.secondary">
                     <strong>Authors: </strong>
-                    {paper.authors?.map((a, index) => (
-                      <span
-                        key={index}
-                        style={{
-                          backgroundColor: a.isFollowed ? 'yellow' : 'inherit',
-                          padding: a.isFollowed ? '0.1rem' : '0',
-                          borderRadius: '0.1rem',
-                        }}
-                      >
-                        {a.name}{index < paper.authors.length - 1 ? ', ' : ''}
-                      </span>
-                    )) || 'Unknown'}
+                    {paper.authors?.length > 0
+                      ? paper.authors.map((a, index) => {
+                          const isLast = index === paper.authors.length - 1;
+                          return (
+                            <span
+                              key={index}
+                              style={{
+                                backgroundColor: a.isFollowed ? 'yellow' : 'inherit',
+                                padding: a.isFollowed ? '0.1rem' : '0',
+                                borderRadius: '0.1rem',
+                              }}
+                            >
+                              {a.name}{isLast ? '.' : ', '}
+                            </span>
+                          );
+                        })
+                      : 'Unknown'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     <strong>Journal:</strong> {paper.venue || 'N/A'}

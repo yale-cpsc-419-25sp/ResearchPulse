@@ -1,9 +1,10 @@
 # Research Pulse
-
+<div style="background-color: #0d1117; padding: 10px; display: inline-block;">
 <img height = "100"
-src="ResearchPulse.svg"
-alt="ResearchPulse logo"
+  src="ResearchPulse.svg"
+  alt="ResearchPulse logo"
 />
+</div>
 
 A platform where researchers can stay up to date with the latest research and research discussions through personalized research feeds. 
 
