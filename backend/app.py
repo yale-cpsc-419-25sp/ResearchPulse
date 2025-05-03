@@ -347,7 +347,7 @@ def deprecated_dashboard():
         JOIN people_following pf ON p.person_id = pf.person_id
         WHERE pf.follower_id = %s
     """, (session['person_id'],))
-    following = cursor.fetchall()
+    following_authors = cursor.fetchall()
 
     cursor.execute("""
         SELECT p.title, p.paper_id, pe.first_name, pe.last_name 
@@ -365,7 +365,7 @@ def deprecated_dashboard():
 
     return render_template('dashboard.html', random_papers=random_papers,
                            search_result=search_result, search_error=search_error,
-                           following=following, followed_papers=followed_papers)
+                           following=following_authors, followed_papers=followed_papers)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -390,7 +390,7 @@ def index():
     return render_template('login.html')
 
 @app.route('/followedpapers', methods=['POST'])
-def followedPapers():
+def followed_papers():
     "function for followed papers"
     data = request.get_json()
     person_id = data.get('id')
@@ -801,7 +801,7 @@ def delete_comment():
 
         if not paper_id:
             return jsonify({"error": "Missing paper ID"}), 400
-        
+
         db_session = Session()
 
         # Find the comment based on comment_id
@@ -876,7 +876,9 @@ def create_group():
         group_id = new_group.group_id
         session_db.close()
 
-        return jsonify({'success': True, 'group_id': new_group.group_id, 'message': 'Group created successfully'})
+        return jsonify({'success': True,
+                        'group_id': new_group.group_id,
+                        'message': 'Group created successfully'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
