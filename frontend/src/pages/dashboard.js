@@ -112,7 +112,7 @@ function Dashboard() {
             </Link>
           </Grid>
           <Grid item xs={12} sm={6} md={6}>
-            <Link to="/create-group" style={{ textDecoration: 'none' }}>
+            <Link to="/creategroup" style={{ textDecoration: 'none' }}>
               {myGroupBox({
                 height: 400,
                 width: 500,
