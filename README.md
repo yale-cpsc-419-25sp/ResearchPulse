@@ -9,11 +9,11 @@
 A platform where researchers can stay up to date with the latest research and research discussions through personalized research feeds. 
 
 ## Features
-Following feed - see papers published by individuals, institutions, or journals you are following 
-Starred Papers - star or save papers of any kind
-Discovery feed - see papers algorithmically recommended based on saved papers, followers, etc. 
-Groups - be able to create a group with other researchers when you can share and discuss papers in the app
-Comments - Researchers can comment in a comment section attached to each paper
+* Following feed - see papers published by individuals, institutions, or journals you are following 
+* Starred Papers - star or save papers of any kind
+* Discovery feed - see papers algorithmically recommended based on saved papers, followers, etc. 
+* Groups - be able to create a group with other researchers when you can share and discuss papers in the app
+* Comments - Researchers can comment in a comment section attached to each paper
 
 ## Setup Instructions
 
@@ -61,4 +61,6 @@ Open new terminal and enter the backend folder to start backend server:
 python app.py
 ```
 
+## Structure & Most interesting feature
 
+The structure of our application is a frontend built with React combined with a backend built with Flask. The templates for the pages can be found in frontend/src/pages. Some highlights are the following.js (displays authors that you are following and supports searching for new authors), joingroup.js (supports joining a group and clicking through to the details for that group), and starred.js (supports searching for and starring papers). With respect to the backend, app.py handles the backend server launching and handling of api requests; queries.py handles fine-grained backend requests and contains the recommendation system; and database.py, database_defs.py and populate_db.py files contain utilities for the database setup. 
